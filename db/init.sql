@@ -3,7 +3,7 @@ CREATE DATABASE IF NOT EXISTS machine_reservation DEFAULT CHARSET utf8mb4 COLLAT
 USE machine_reservation;
 
 -- 创建用户表
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS teachers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS reservations (
 );
 
 -- 插入一个管理员用户（密码是明文，需加密后更新）
-INSERT INTO users (username, password, role)
+INSERT INTO teachers (username, password, role)
 VALUES ('admin', 'admin123', 'admin');
 
 -- 插入一些测试机房
