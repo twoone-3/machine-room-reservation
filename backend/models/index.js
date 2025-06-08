@@ -13,7 +13,7 @@ const sequelize = new Sequelize(
   }
 );
 
-// Define User model
+// User model
 const User = sequelize.define('User', {
   username: {
     type: DataTypes.STRING,
@@ -32,7 +32,7 @@ const User = sequelize.define('User', {
   timestamps: true,
 });
 
-// Define Room model
+// Room model
 const Room = sequelize.define('Room', {
   name: {
     type: DataTypes.STRING,
@@ -52,7 +52,7 @@ const Room = sequelize.define('Room', {
   timestamps: true,
 });
 
-// Define Reservation model
+// Reservation model
 const Reservation = sequelize.define('Reservation', {
   date: {
     type: DataTypes.DATEONLY,
@@ -70,14 +70,14 @@ const Reservation = sequelize.define('Reservation', {
   timestamps: true,
 });
 
-// Define relationships
+// Relationships
 User.hasMany(Reservation, { foreignKey: 'user_id' });
 Reservation.belongsTo(User, { foreignKey: 'user_id' });
 
 Room.hasMany(Reservation, { foreignKey: 'room_id' });
 Reservation.belongsTo(Room, { foreignKey: 'room_id' });
 
-// Sync models with the database
+// Sync models
 const syncModels = async () => {
   await sequelize.sync();
 };

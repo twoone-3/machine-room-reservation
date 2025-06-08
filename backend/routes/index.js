@@ -3,14 +3,14 @@ import { createUser, loginUser, createRoom, makeReservation } from '../controlle
 
 const router = express.Router();
 
-// User routes
+// 用户注册与登录
 router.post('/users/register', createUser);
 router.post('/users/login', loginUser);
 
-// Room routes
+// 机房管理
 router.post('/rooms', createRoom);
 
-// Reservation routes
+// 预约管理
 router.post('/reservations', makeReservation);
 
 export default router;
