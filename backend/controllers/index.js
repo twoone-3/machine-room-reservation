@@ -1,7 +1,5 @@
 // filepath: c:\Users\Administrator\dev\machine-room-reservation\backend\src\controllers\index.js
-import User from '../models/User.js';
-import Room from '../models/Room.js';
-import Reservation from '../models/Reservation.js';
+import { User, Room, Reservation } from '../models/index.js';
 
 // Create a new user
 export const createUser = async (req, res) => {

@@ -1,10 +1,10 @@
 // filepath: c:\Users\Administrator\dev\machine-room-reservation\backend\src\middlewares\index.js
-const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
-const verifyToken = (req, res, next) => {
+export const verifyToken = (req, res, next) => {
     const token = req.headers['authorization'];
     if (!token) {
         return res.status(403).send('A token is required for authentication');
@@ -18,14 +18,9 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-const checkAdmin = (req, res, next) => {
+export const checkAdmin = (req, res, next) => {
     if (req.user.role !== 'admin') {
         return res.status(403).send('Access denied, admin only');
     }
     next();
-};
-
-module.exports = {
-    verifyToken,
-    checkAdmin,
 };
