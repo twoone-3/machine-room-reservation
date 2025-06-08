@@ -58,6 +58,7 @@ npm install
 
 ```env
 DB_HOST=localhost
+DB_PORT=3306(MySQL默认端口)
 DB_USER=root
 DB_PASSWORD=你的密码
 DB_NAME=machine_reservation
@@ -68,29 +69,28 @@ JWT_SECRET=your_jwt_secret
 
 ### 4. 启动项目
 
-```bash
-# 启动后端（在 backend 文件夹）
-node app.js
+在项目根目录下，双击或运行 `run.bat`，即可自动分别启动后端和前端服务：
 
-# 启动前端（在 frontend 文件夹）
-npm run dev
+```bat
+run.bat
 ```
 
 ---
 
 ## 📌 功能模块
 
-### 学生端：
+### 用户端：
 
-* 用户注册、登录
-* 预约机房时间段
+* 用户注册 / 登录
+* 查看机房列表
+* 预约机房
 * 查看和取消预约记录
 
 ### 管理员端：
 
 * 添加 / 删除 / 编辑机房
-* 审核学生预约
-* 查看预约统计信息（可选）
+* 查看机房列表
+* 管理用户
 
 ---
 
