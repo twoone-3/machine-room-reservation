@@ -1,7 +1,7 @@
 
 # 🏫 机房预约系统 Machine Room Reservation System
 
-本项目是一个基于 Vue + Node.js + MySQL 的全栈机房预约平台，支持学生预约、管理员管理机房和预约情况。
+本项目是一个基于 Vue + Node.js + MySQL 的全栈机房预约平台，支持教师用户预约、管理员管理机房和预约情况。
 
 ---
 
