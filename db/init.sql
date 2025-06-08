@@ -1,8 +1,8 @@
--- �������ݿ⣨��������ڣ�
+﻿-- 创建数据库（如果不存在）
 CREATE DATABASE IF NOT EXISTS machine_reservation DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 USE machine_reservation;
 
--- �����û���
+-- 创建用户表
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ����������
+-- 创建机房表
 CREATE TABLE IF NOT EXISTS rooms (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -21,29 +21,29 @@ CREATE TABLE IF NOT EXISTS rooms (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ����ԤԼ��¼��
+-- 创建预约记录表
 CREATE TABLE IF NOT EXISTS reservations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     room_id INT NOT NULL,
     date DATE NOT NULL,
-    time_slot VARCHAR(50) NOT NULL, -- �� "08:00-10:00"
+    time_slot VARCHAR(50) NOT NULL, -- 如 "08:00-10:00"
     status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
 );
 
--- ����һ������Ա�û������������ģ�����ܺ���£�
+-- 插入一个管理员用户（密码是明文，需加密后更新）
 INSERT INTO users (username, password, role)
 VALUES ('admin', 'admin123', 'admin');
 
--- ����һЩ���Ի���
+-- 插入一些测试机房
 INSERT INTO rooms (name, location, capacity, description)
 VALUES 
-('һ�Ż���', '��ѧ¥ A �� 3 ��', 40, '�䱸40̨��������ʺ��ϻ��γ�ʹ��'),
-('���Ż���', '��ѧ¥ B �� 2 ��', 30, '���ڻ�����̽�ѧ����ͶӰ�豸');
+('一号机房', '教学楼 A 区 3 层', 40, '配备40台计算机，适合上机课程使用'),
+('二号机房', '教学楼 B 区 2 层', 30, '用于基础编程教学，含投影设备');
 
--- �������ԤԼ��¼����ѡ��
+-- 插入测试预约记录（可选）
 INSERT INTO reservations (user_id, room_id, date, time_slot, status)
 VALUES (1, 1, '2025-06-10', '10:00-12:00', 'approved');
