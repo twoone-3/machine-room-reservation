@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import './RoomsDisplay.css'; // 新增：引入外部样式
-import '../style.css'; // 引入全局样式
+import './test.css'; // 新增：引入外部样式
+import '../main.css'; // 引入全局样式
 
 const rooms = ref([]);
 const loading = ref(true);

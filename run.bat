@@ -1,5 +1,6 @@
-cd D:\Code\machine-room-reservation\backend
+cd .\backend
 start node.exe app.js
 
-cd D:\Code\machine-room-reservation\frontend
+cd ..
+cd .\frontend
 start npm.cmd run dev
