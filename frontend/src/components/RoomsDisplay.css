@@ -1,0 +1,103 @@
+.rooms-display {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  padding: 2rem;
+  max-width: 900px;
+  margin: 2rem auto;
+  background-color: var(--card-bg-color, #f9f9f9);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .rooms-display {
+    background-color: var(--card-bg-color-dark, #2e2e2e);
+    color: rgba(255, 255, 255, 0.87);
+  }
+  .room-item {
+    border-color: #444;
+    background-color: #3a3a3a;
+  }
+}
+
+.rooms-display h2 {
+  text-align: center;
+  margin-bottom: 1.5em;
+  color: var(--heading-color, #333);
+}
+@media (prefers-color-scheme: dark) {
+  .rooms-display h2 {
+    color: #dcdcdc;
+  }
+}
+
+.loading-message, .error-message, .no-data-message {
+  text-align: center;
+  padding: 1em;
+  margin-top: 1em;
+  border-radius: 4px;
+}
+
+.loading-message {
+  color: #555;
+}
+@media (prefers-color-scheme: dark) {
+  .loading-message {
+    color: #bbb;
+  }
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+@media (prefers-color-scheme: dark) {
+  .error-message {
+    background-color: #5c2c2c;
+    color: #ffcdd2;
+    border: 1px solid #8c4343;
+  }
+}
+
+.no-data-message {
+  color: #777;
+}
+@media (prefers-color-scheme: dark) {
+  .no-data-message {
+    color: #aaa;
+  }
+}
+
+.room-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.room-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 1em 1.5em;
+  margin-bottom: 1em;
+  background-color: #ffffff;
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.room-item:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.room-item h3 {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+  color: var(--item-heading-color, #646cff);
+}
+
+.room-item p {
+  margin: 0.3em 0;
+  line-height: 1.6;
+  font-size: 0.95em;
+}
+
+.room-item strong {
+  font-weight: 500;
+}

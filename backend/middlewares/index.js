@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+/**
+ * 校验 JWT Token 中间件
+ */
 export const verifyToken = (req, res, next) => {
     const token = req.headers['authorization'];
     if (!token) {
@@ -18,6 +21,9 @@ export const verifyToken = (req, res, next) => {
     });
 };
 
+/**
+ * 检查是否为管理员
+ */
 export const checkAdmin = (req, res, next) => {
     if (req.user.role !== 'admin') {
         return res.status(403).send('Access denied, admin only');

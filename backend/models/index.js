@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// 初始化 Sequelize 实例
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
@@ -13,7 +14,7 @@ const sequelize = new Sequelize(
   }
 );
 
-// User model
+// 用户模型
 const User = sequelize.define('User', {
   username: {
     type: DataTypes.STRING,
@@ -25,14 +26,17 @@ const User = sequelize.define('User', {
     allowNull: false,
   },
   role: {
-    type: DataTypes.ENUM('student', 'admin'),
-    defaultValue: 'student',
+    type: DataTypes.ENUM('teachers', 'admin'), // 与 init.sql 一致
+    defaultValue: 'teachers', // 与 init.sql 一致
   },
 }, {
   timestamps: true,
+  tableName: 'users', // 指定表名以匹配 init.sql
+  underscored: true, // 添加此行，将驼峰字段名映射到下划线数据库列名
+  updatedAt: false,  // 添加此行，因为 init.sql 中没有 updated_at 列
 });
 
-// Room model
+// 机房模型
 const Room = sequelize.define('Room', {
   name: {
     type: DataTypes.STRING,
@@ -50,9 +54,12 @@ const Room = sequelize.define('Room', {
   },
 }, {
   timestamps: true,
+  tableName: 'rooms', // 指定表名以匹配 init.sql
+  underscored: true, // 添加此行
+  updatedAt: false,  // 添加此行
 });
 
-// Reservation model
+// 预约模型
 const Reservation = sequelize.define('Reservation', {
   date: {
     type: DataTypes.DATEONLY,
@@ -68,16 +75,19 @@ const Reservation = sequelize.define('Reservation', {
   },
 }, {
   timestamps: true,
+  tableName: 'reservations', // 指定表名以匹配 init.sql
+  underscored: true, // 添加此行
+  updatedAt: false,  // 添加此行
 });
 
-// Relationships
+// 关联关系
 User.hasMany(Reservation, { foreignKey: 'user_id' });
 Reservation.belongsTo(User, { foreignKey: 'user_id' });
 
 Room.hasMany(Reservation, { foreignKey: 'room_id' });
 Reservation.belongsTo(Room, { foreignKey: 'room_id' });
 
-// Sync models
+// 同步模型到数据库
 const syncModels = async () => {
   await sequelize.sync();
 };
