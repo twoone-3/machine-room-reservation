@@ -26,14 +26,15 @@ const User = sequelize.define('User', {
     allowNull: false,
   },
   role: {
-    type: DataTypes.ENUM('teachers', 'admin'), // 与 init.sql 一致
-    defaultValue: 'teachers', // 与 init.sql 一致
+    type: DataTypes.ENUM('teacher', 'admin'),
+    defaultValue: 'teacher',
   },
 }, {
   timestamps: true,
-  tableName: 'users', // 指定表名以匹配 init.sql
-  underscored: true, // 添加此行，将驼峰字段名映射到下划线数据库列名
-  updatedAt: false,  // 添加此行，因为 init.sql 中没有 updated_at 列
+  tableName: 'users',
+  underscored: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
 // 机房模型
@@ -49,14 +50,19 @@ const Room = sequelize.define('Room', {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  status: {
+    type: DataTypes.ENUM('available', 'unavailable'),
+    defaultValue: 'available',
+  },
   description: {
     type: DataTypes.TEXT,
   },
 }, {
   timestamps: true,
-  tableName: 'rooms', // 指定表名以匹配 init.sql
-  underscored: true, // 添加此行
-  updatedAt: false,  // 添加此行
+  tableName: 'rooms',
+  underscored: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
 // 预约模型
@@ -65,19 +71,24 @@ const Reservation = sequelize.define('Reservation', {
     type: DataTypes.DATEONLY,
     allowNull: false,
   },
-  time_slot: {
-    type: DataTypes.STRING,
+  start_time: {
+    type: DataTypes.TIME,
+    allowNull: false,
+  },
+  end_time: {
+    type: DataTypes.TIME,
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
-    defaultValue: 'pending',
+    type: DataTypes.ENUM('booked', 'completed', 'cancelled'),
+    defaultValue: 'booked',
   },
 }, {
   timestamps: true,
-  tableName: 'reservations', // 指定表名以匹配 init.sql
-  underscored: true, // 添加此行
-  updatedAt: false,  // 添加此行
+  tableName: 'reservations',
+  underscored: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
 // 关联关系

@@ -1,4 +1,3 @@
-// filepath: c:\Users\Administrator\dev\machine-room-reservation\backend\src\controllers\index.js
 import { User, Room, Reservation } from '../models/index.js';
 
 // 创建用户（注册）
@@ -22,8 +21,8 @@ export const getAllRooms = async (req, res) => {
         const rooms = await Room.findAll();
         res.json(rooms);
     } catch (error) {
-        console.error('Error fetching rooms:', error);
-        res.status(500).json({ message: 'Error fetching rooms', error: error.message });
+        console.error('获取机房信息出错:', error);
+        res.status(500).json({ message: '获取机房信息出错', error: error.message });
     }
 };
 

@@ -21,11 +21,11 @@ connectDB();
 (async () => {
   try {
     await sequelize.authenticate();
-    console.log('Sequelize: Connection has been established successfully.');
+    console.log('Sequelize：数据库连接成功。');
     await syncModels(); // 同步模型到数据库
-    console.log('Sequelize: All models were synchronized successfully.');
+    console.log('Sequelize：所有模型已成功同步。');
   } catch (error) {
-    console.error('Sequelize: Unable to connect to the database or sync models:', error);
+    console.error('Sequelize：无法连接到数据库或同步模型：', error);
   }
 })();
 
@@ -34,5 +34,5 @@ app.use('/api', routes);
 
 // 启动服务
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`服务器正在运行：http://localhost:${PORT}`);
 });
