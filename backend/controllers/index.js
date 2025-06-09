@@ -1,24 +1,32 @@
-// filepath: c:\Users\Administrator\dev\machine-room-reservation\backend\src\controllers\index.js
-import User from '../models/User.js';
-import Room from '../models/Room.js';
-import Reservation from '../models/Reservation.js';
+import { User, Room, Reservation } from '../models/index.js';
 
-// Create a new user
+// 创建用户（注册）
 export const createUser = async (req, res) => {
-    // Implementation for creating a user
+    // TODO: 实现用户注册
 };
 
-// Login user
+// 用户登录
 export const loginUser = async (req, res) => {
-    // Implementation for user login
+    // TODO: 实现用户登录
 };
 
-// Create a new room
+// 创建机房
 export const createRoom = async (req, res) => {
-    // Implementation for creating a room
+    // TODO: 实现机房创建
 };
 
-// Make a reservation
+// 获取所有机房信息
+export const getAllRooms = async (req, res) => {
+    try {
+        const rooms = await Room.findAll();
+        res.json(rooms);
+    } catch (error) {
+        console.error('获取机房信息出错:', error);
+        res.status(500).json({ message: '获取机房信息出错', error: error.message });
+    }
+};
+
+// 创建预约
 export const makeReservation = async (req, res) => {
-    // Implementation for making a reservation
+    // TODO: 实现预约
 };

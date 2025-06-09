@@ -1,0 +1,37 @@
+.app-header {
+  text-align: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #eaeaea;
+  margin-bottom: 2rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-header {
+    border-bottom: 1px solid #3a3a3a;
+  }
+  .app-header h1 {
+    color: rgba(255, 255, 255, 0.87);
+  }
+}
+
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2em;
+  margin-bottom: 1rem;
+}
+
+.logo {
+  height: 4em; /* 调整 Logo 大小 */
+  padding: 0.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo.vite:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.vue:hover {
+  filter: drop-shadow(0 0 2em #42b883aa);
+}

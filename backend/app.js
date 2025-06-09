@@ -1,25 +1,38 @@
-// filepath: c:\Users\Administrator\dev\machine-room-reservation\backend\src\app.js
 import express from 'express';
-import bodyParser from 'body-parser';
 import cors from 'cors';
 import routes from './routes/index.js';
 import { connectDB } from './config/db.js';
+import { sequelize, syncModels } from './models/index.js'; // 导入 sequelize 和 syncModels
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// 跨域中间件，允许前端请求
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// 解析 JSON 请求体
+app.use(express.json());
+// 解析 URL 编码请求体
+app.use(express.urlencoded({ extended: true }));
 
-// Database connection
+// 数据库连接
 connectDB();
 
-// Routes
+// Sequelize 初始化和模型同步
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Sequelize：数据库连接成功。');
+    await syncModels(); // 同步模型到数据库
+    console.log('Sequelize：所有模型已成功同步。');
+  } catch (error) {
+    console.error('Sequelize：无法连接到数据库或同步模型：', error);
+  }
+})();
+
+// 路由挂载，所有接口统一加 /api 前缀
 app.use('/api', routes);
 
-// Start the server
+// 启动服务
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`服务器正在运行：http://localhost:${PORT}`);
 });

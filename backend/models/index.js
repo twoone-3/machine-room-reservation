@@ -1,15 +1,20 @@
-// filepath: c:\Users\Administrator\dev\machine-room-reservation\backend\src\models\index.js
-const { Sequelize, DataTypes } = require('sequelize');
-const dotenv = require('dotenv');
+import { Sequelize, DataTypes } from 'sequelize';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
-  host: process.env.DB_HOST,
-  dialect: 'mysql',
-});
+// 初始化 Sequelize 实例
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    dialect: 'mysql',
+  }
+);
 
-// Define User model
+// 用户模型
 const User = sequelize.define('User', {
   username: {
     type: DataTypes.STRING,
@@ -21,14 +26,18 @@ const User = sequelize.define('User', {
     allowNull: false,
   },
   role: {
-    type: DataTypes.ENUM('student', 'admin'),
-    defaultValue: 'student',
+    type: DataTypes.ENUM('teacher', 'admin'),
+    defaultValue: 'teacher',
   },
 }, {
   timestamps: true,
+  tableName: 'users',
+  underscored: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
-// Define Room model
+// 机房模型
 const Room = sequelize.define('Room', {
   name: {
     type: DataTypes.STRING,
@@ -41,47 +50,57 @@ const Room = sequelize.define('Room', {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  status: {
+    type: DataTypes.ENUM('available', 'unavailable'),
+    defaultValue: 'available',
+  },
   description: {
     type: DataTypes.TEXT,
   },
 }, {
   timestamps: true,
+  tableName: 'rooms',
+  underscored: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
-// Define Reservation model
+// 预约模型
 const Reservation = sequelize.define('Reservation', {
   date: {
     type: DataTypes.DATEONLY,
     allowNull: false,
   },
-  time_slot: {
-    type: DataTypes.STRING,
+  start_time: {
+    type: DataTypes.TIME,
+    allowNull: false,
+  },
+  end_time: {
+    type: DataTypes.TIME,
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
-    defaultValue: 'pending',
+    type: DataTypes.ENUM('booked', 'completed', 'cancelled'),
+    defaultValue: 'booked',
   },
 }, {
   timestamps: true,
+  tableName: 'reservations',
+  underscored: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
-// Define relationships
+// 关联关系
 User.hasMany(Reservation, { foreignKey: 'user_id' });
 Reservation.belongsTo(User, { foreignKey: 'user_id' });
 
 Room.hasMany(Reservation, { foreignKey: 'room_id' });
 Reservation.belongsTo(Room, { foreignKey: 'room_id' });
 
-// Sync models with the database
+// 同步模型到数据库
 const syncModels = async () => {
   await sequelize.sync();
 };
 
-module.exports = {
-  sequelize,
-  User,
-  Room,
-  Reservation,
-  syncModels,
-};
+export { sequelize, User, Room, Reservation, syncModels };
