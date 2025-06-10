@@ -1,4 +1,4 @@
--- æ¸…ç©ºæ‰€æœ‰è¡¨æ•°æ®å¹¶é‡ç½®è‡ªå¢žä¸»é”®
+-- Çå¿ÕËùÓÐ±íÊý¾Ý²¢ÖØÖÃ×ÔÔöÖ÷¼ü
 
 USE machine_reservation;
 
