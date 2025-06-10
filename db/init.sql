@@ -1,4 +1,4 @@
--- ???????????????????
+-- MySQL 数据库初始化脚本
 CREATE DATABASE IF NOT EXISTS machine_reservation DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 USE machine_reservation;
 
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- ??????????
+-- 创建机房表
 CREATE TABLE IF NOT EXISTS rooms (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS rooms (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- ???????????
+-- 创建预约表
 CREATE TABLE IF NOT EXISTS reservations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS reservations (
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
 );
 
--- ??????????????????????????????????????
+-- 插入一些测试用户
 INSERT INTO users (username, password, role)
 VALUES ('admin', '123456', 'admin'),
         ('Li', '123456', 'teacher'),
