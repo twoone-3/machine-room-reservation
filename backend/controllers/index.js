@@ -4,14 +4,22 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET 未设置，请检查 .env 文件');
+}
+
 // 用户注册（可选实现）
 export const createUser = async (req, res) => { 
     // TODO: 实现用户注册
-}
+};
 
 // 用户登录
 export const loginUser = async (req, res) => {
     const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ message: '用户名和密码不能为空' });
+    }
     try {
         const user = await User.findOne({ where: { username } });
         if (!user || user.password !== password) {
@@ -20,11 +28,12 @@ export const loginUser = async (req, res) => {
         // 生成JWT
         const token = jwt.sign(
             { id: user.id, username: user.username, role: user.role },
-            process.env.JWT_SECRET,
+            JWT_SECRET,
             { expiresIn: '2h' }
         );
         res.json({ token, username: user.username, role: user.role });
     } catch (error) {
+        console.error('登录失败:', error);
         res.status(500).json({ message: '登录失败', error: error.message });
     }
 };
