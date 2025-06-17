@@ -67,7 +67,8 @@ const login = async () => {
         </div>
         <div class="form-group">
           <label for="password">密码</label>
-          <input id="password" v-model="password" type="password" required autocomplete="current-password" placeholder="请输入密码" />
+          <input id="password" v-model="password" type="password" required autocomplete="current-password"
+            placeholder="请输入密码" />
         </div>
         <button type="submit" :disabled="loading">{{ loading ? '登录中...' : '登录' }}</button>
         <div v-if="error" class="error-message">

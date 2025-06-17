@@ -13,8 +13,6 @@ function handleLoginSuccess(data) {
 </script>
 
 <template>
-  <component
-    :is="role === 'admin' ? admin : role === 'teacher' ? teacher : login"
-    @login-success="handleLoginSuccess"
-  />
+  <component :is="role === 'admin' ? admin : role === 'teacher' ? teacher : login"
+    @login-success="handleLoginSuccess" />
 </template>

@@ -9,6 +9,7 @@
   .app-header {
     border-bottom: 1px solid #3a3a3a;
   }
+
   .app-header h1 {
     color: rgba(255, 255, 255, 0.87);
   }
@@ -24,14 +25,17 @@
 }
 
 .logo {
-  height: 4em; /* 调整 Logo 大小 */
+  height: 4em;
+  /* 调整 Logo 大小 */
   padding: 0.5em;
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo.vite:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #42b883aa);
 }
