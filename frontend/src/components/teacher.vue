@@ -1,19 +1,25 @@
 <template>
   <div class="teacher-page">
-    <!-- 教师页面内容 -->
-    <button @click="logout">退出登录</button>
+    <navbar :role="'teacher'" @nav="currentPage = $event" @logout="logout" />
     <p>欢迎 {{ userInfo.username }}教师!</p>
+    <room-list v-if="currentPage === 'room'" />
+    <reservation-list v-else-if="currentPage === 'reservation'" />
+    <back-to-top />
   </div>
-  <navbar :role="'teacher'" />
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import navbar from './navbar.vue';
+import navbar from './NavBar.vue';
+import RoomList from './RoomList.vue';
+import ReservationList from './ReservationList.vue';
+import BackToTop from './BackToTop.vue';
 
 const userInfo = ref({
   username: localStorage.getItem('username') || ''
 });
+
+const currentPage = ref('room'); // 默认显示机房列表
 
 const logout = () => {
   localStorage.removeItem('role');

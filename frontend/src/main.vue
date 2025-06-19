@@ -1,8 +1,8 @@
 <script setup>
 import { ref } from 'vue';
-import login from './components/login.vue';
-import admin from './components/admin.vue';
-import teacher from './components/teacher.vue';
+import login from './components/Login.vue';
+import admin from './components/Admin.vue';
+import teacher from './components/Teacher.vue';
 import './main.css';
 
 const role = ref(localStorage.getItem('role') || null);
@@ -13,6 +13,8 @@ function handleLoginSuccess(data) {
 </script>
 
 <template>
-  <component :is="role === 'admin' ? admin : role === 'teacher' ? teacher : login"
-    @login-success="handleLoginSuccess" />
+  <keep-alive>
+    <component :is="role === 'admin' ? admin : role === 'teacher' ? teacher : login"
+      @login-success="handleLoginSuccess" />
+  </keep-alive>
 </template>
