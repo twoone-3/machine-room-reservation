@@ -106,10 +106,6 @@ html {
   box-shadow: 0 4px 16px rgba(109, 140, 240, 0.13);
 }
 
-.login-form button[type="submit"]:active {
-  transform: translateY(1.5px) scale(0.98);
-}
-
 .login-form button[type="submit"]:disabled {
   background: #b3c6fa;
   cursor: not-allowed;
