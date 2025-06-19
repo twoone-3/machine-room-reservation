@@ -27,8 +27,6 @@ machine-room-reservation/
 
 ```
 
----
-
 ## 🚀 快速开始
 
 ### 1. 克隆项目
@@ -36,7 +34,7 @@ machine-room-reservation/
 ```bash
 git clone https://github.com/你的用户名/machine-room-reservation.git
 cd machine-room-reservation
-````
+```
 
 ### 2. 安装依赖
 
@@ -52,20 +50,18 @@ npm install
 
 ### 3. 配置数据库
 
-1. 确保已安装 MySQL 并创建数据库（如：`machine_reservation`）。
-2. 将 `db/init.sql` 脚本导入数据库。
-3. 在 `backend/` 中创建 `.env` 文件：
+1. 确保已安装 [MySQL](https://dev.mysql.com/downloads/mysql/)
+2. 下载 [MySQL Workbench](https://dev.mysql.com/downloads/workbench/) 或使用命令行创建数据库 `machine_reservation`，并设置 root 用户密码为 `123456`。
+3. 将 `db/init.sql` 脚本导入数据库，如果需要清除数据，可以运行 `db/clear.sql` 脚本。
+4. 在 `backend/` 中创建 `.env` 文件：
 
 ```env
 DB_HOST=localhost
-DB_PORT=3306(MySQL默认端口)
 DB_USER=root
-DB_PASSWORD=你的密码
+DB_PASSWORD=123456
 DB_NAME=machine_reservation
 JWT_SECRET=your_jwt_secret
 ```
-
----
 
 ### 4. 启动项目
 
@@ -74,8 +70,6 @@ JWT_SECRET=your_jwt_secret
 ```bat
 run.bat
 ```
-
----
 
 ## 📌 功能模块
 
@@ -91,8 +85,6 @@ run.bat
 - 添加 / 删除 / 编辑机房
 - 查看机房列表
 - 管理用户
-
----
 
 ## 📄 License
 
