@@ -24,12 +24,12 @@
         <div
           v-for="col in columns"
           :key="col.key"
-          class="header-item sortable"
-          :class="{ active: sortKey === col.key }"
-          @click="sortBy(col.key)"
+          class="header-item"
+          :class="{ sortable: col.key !== 'action', active: sortKey === col.key }"
+          @click="col.key !== 'action' && sortBy(col.key)"
         >
           {{ col.label }}
-          <span class="sort-arrow" v-if="sortKey === col.key">
+          <span class="sort-arrow" v-if="sortKey === col.key && col.key !== 'action'">
             <svg v-if="sortOrder === 'asc'" width="12" height="12" viewBox="0 0 12 12">
               <path d="M6 3l4 6H2z" fill="#6d8cf0"/>
             </svg>
@@ -40,7 +40,7 @@
         </div>
       </div>
       <div class="table-body">
-        <div v-for="room in filteredRooms" :key="room.id" class="table-row">
+        <div v-for="room in pagedRooms" :key="room.id" class="table-row">
           <div class="row-item">{{ room.name }}</div>
           <div class="row-item">{{ room.location || '-' }}</div>
           <div class="row-item">{{ room.capacity }} 人</div>
@@ -50,15 +50,111 @@
             </span>
           </div>
           <div class="row-item description">{{ room.description || '-' }}</div>
+          <!-- 操作列：预约按钮 -->
+          <div class="row-item">
+            <button
+              v-if="room.status === 'available'"
+              class="reserve-btn"
+              @click="openReserveDialog(room)"
+            >预约</button>
+          </div>
         </div>
       </div>
     </div>
+    <Pagination
+      v-if="filteredRooms.length > pageSize"
+      :total="filteredRooms.length"
+      :page-size="pageSize"
+      v-model="page"
+      style="margin-top: 24px;"
+    />
+    <!-- 预约弹窗 -->
+    <transition name="dialog-fade">
+      <div v-if="showReserveDialog" class="dialog-mask">
+        <div class="dialog-box">
+          <div class="dialog-icon-wrapper">
+            <svg class="dialog-icon" width="48" height="48" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="11" fill="#eaf0ff"/>
+              <path d="M12 7v5l3 3" stroke="#6d8cf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="dialog-title">
+            预约机房：<span style="color:#6d8cf0">{{ reserveRoom?.name }}</span>
+          </div>
+          <div class="dialog-content" style="padding-bottom:0;">
+            <form @submit.prevent="submitReservation" class="reserve-form">
+              <div class="form-row">
+                <label>日期</label>
+                <input type="date" v-model="reserveForm.date" :min="today" required />
+              </div>
+              <div class="form-row">
+                <label>开始时间</label>
+                <div class="custom-time-input">
+                  <select v-model="timeParts.startHour" required>
+                    <option v-for="h in 24" :key="`start-h-${h}`" :value="(h-1).toString().padStart(2, '0')">
+                      {{ (h-1).toString().padStart(2, '0') }}
+                    </option>
+                  </select>
+                  <span>:</span>
+                  <select v-model="timeParts.startMinute" required>
+                    <option v-for="m in 6" :key="`start-m-${m}`" :value="((m-1)*10).toString().padStart(2, '0')">
+                      {{ ((m-1)*10).toString().padStart(2, '0') }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <label>结束时间</label>
+                <div class="custom-time-input">
+                  <select v-model="timeParts.endHour" required>
+                    <option v-for="h in 24" :key="`end-h-${h}`" :value="(h-1).toString().padStart(2, '0')">
+                      {{ (h-1).toString().padStart(2, '0') }}
+                    </option>
+                  </select>
+                  <span>:</span>
+                  <select v-model="timeParts.endMinute" required>
+                    <option v-for="m in 6" :key="`end-m-${m}`" :value="((m-1)*10).toString().padStart(2, '0')">
+                      {{ ((m-1)*10).toString().padStart(2, '0') }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="dialog-actions">
+                <button type="submit" class="dialog-btn confirm" :disabled="reserveLoading">
+                  <span v-if="reserveLoading" class="loading-spinner"></span>
+                  确认预约
+                </button>
+                <button type="button" class="dialog-btn cancel" @click="closeReserveDialog">取消</button>
+              </div>
+              <div v-if="reserveError" class="error">{{ reserveError }}</div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </transition>
+    <!-- 预约成功弹窗 -->
+    <transition name="dialog-fade">
+      <div v-if="showSuccessDialog" class="dialog-mask">
+        <div class="dialog-box success-box">
+          <div class="success-icon">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="24" fill="#eaf0ff"/>
+              <path d="M15 25.5l7 7 11-13" stroke="#6d8cf0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="success-text">预约成功！</div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watchEffect } from 'vue';
 import PinyinMatch from 'pinyin-match';
+import Pagination from './Pagination.vue';
+
+const today = new Date().toISOString().split('T')[0];
 
 const rooms = ref([]);
 const loading = ref(true);
@@ -73,7 +169,8 @@ const columns = [
   { key: 'location', label: '位置' },
   { key: 'capacity', label: '容量' },
   { key: 'status', label: '状态' },
-  { key: 'description', label: '描述' }
+  { key: 'description', label: '描述' },
+  { key: 'action', label: '操作' }
 ];
 
 const fetchRooms = async () => {
@@ -94,7 +191,7 @@ const fetchRooms = async () => {
   }
 };
 
-const sortBy = (key) => {
+const sortBy = key => {
   if (sortKey.value === key) {
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
   } else {
@@ -103,7 +200,7 @@ const sortBy = (key) => {
   }
 };
 
-const statusText = (status) => status === 'available' ? '可用' : '不可用';
+const statusText = status => status === 'available' ? '可用' : '不可用';
 
 const filteredRooms = computed(() => {
   const keyword = search.value.trim().toLowerCase();
@@ -116,207 +213,118 @@ const filteredRooms = computed(() => {
     );
   });
 
-  filtered = [...filtered].sort((a, b) => {
-    let valA = a[sortKey.value];
-    let valB = b[sortKey.value];
-    valA = valA ?? '';
-    valB = valB ?? '';
-
+  return filtered.sort((a, b) => {
+    let valA = a[sortKey.value] ?? '';
+    let valB = b[sortKey.value] ?? '';
     if (sortKey.value === 'status') {
       const statusOrder = { available: 0, unavailable: 1 };
-      return sortOrder.value === 'asc'
-        ? statusOrder[valA] - statusOrder[valB]
-        : statusOrder[valB] - statusOrder[valA];
+      return (sortOrder.value === 'asc' ? 1 : -1) * (statusOrder[valA] - statusOrder[valB]);
     }
-
     if (typeof valA === 'number' && typeof valB === 'number') {
-      return sortOrder.value === 'asc' ? valA - valB : valB - valA;
+      return (sortOrder.value === 'asc' ? 1 : -1) * (valA - valB);
     }
-    return sortOrder.value === 'asc'
-      ? String(valA).localeCompare(String(valB), 'zh-CN')
-      : String(valB).localeCompare(String(valA), 'zh-CN');
+    return (sortOrder.value === 'asc' ? 1 : -1) * String(valA).localeCompare(String(valB), 'zh-CN');
   });
-  return filtered;
+});
+
+const page = ref(1);
+const pageSize = 10;
+const pagedRooms = computed(() => {
+  const start = (page.value - 1) * pageSize;
+  return filteredRooms.value.slice(start, start + pageSize);
 });
 
 onMounted(fetchRooms);
+
+const showReserveDialog = ref(false);
+const reserveRoom = ref(null);
+const reserveForm = ref({ date: '', start_time: '', end_time: '' });
+const reserveLoading = ref(false);
+const reserveError = ref('');
+const showSuccessDialog = ref(false);
+const timeParts = ref({
+  startHour: '09',
+  startMinute: '00',
+  endHour: '10',
+  endMinute: '00'
+});
+
+// 监听时间选择的变化，并自动更新表单数据
+watchEffect(() => {
+  reserveForm.value.start_time = `${timeParts.value.startHour}:${timeParts.value.startMinute}`;
+  reserveForm.value.end_time = `${timeParts.value.endHour}:${timeParts.value.endMinute}`;
+});
+
+const openReserveDialog = room => {
+  reserveRoom.value = room;
+  // 设置表单默认值
+  reserveForm.value.date = today;
+  timeParts.value = {
+    startHour: '09',
+    startMinute: '00',
+    endHour: '10',
+    endMinute: '00'
+  };
+  reserveError.value = '';
+  showReserveDialog.value = true;
+};
+const closeReserveDialog = () => {
+  showReserveDialog.value = false;
+  reserveRoom.value = null;
+};
+
+const submitReservation = async () => {
+  reserveError.value = '';
+  // 校验结束时间不能小于等于开始时间
+  const start = `${timeParts.value.startHour}:${timeParts.value.startMinute}`;
+  const end = `${timeParts.value.endHour}:${timeParts.value.endMinute}`;
+  if (end <= start) {
+    reserveError.value = '结束时间必须晚于开始时间';
+    return;
+  }
+
+  // 新增：校验开始和结束时间不能早于当前时间
+  const now = new Date();
+  const selectedDate = new Date(reserveForm.value.date);
+  const startDateTime = new Date(`${reserveForm.value.date}T${start}:00`);
+  const endDateTime = new Date(`${reserveForm.value.date}T${end}:00`);
+  // 只校验今天的预约
+  if (
+    selectedDate.toDateString() === now.toDateString() &&
+    (startDateTime < now || endDateTime < now)
+  ) {
+    reserveError.value = '请选择合理的时间哦~';
+    return;
+  }
+
+  reserveLoading.value = true;
+  try {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${apiBase}/api/reservations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token
+      },
+      body: JSON.stringify({
+        room_id: reserveRoom.value.id,
+        date: reserveForm.value.date,
+        start_time: reserveForm.value.start_time,
+        end_time: reserveForm.value.end_time
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: '预约失败' }));
+      throw new Error(err.message);
+    }
+    closeReserveDialog();
+    showSuccessDialog.value = true;
+    setTimeout(() => { showSuccessDialog.value = false; }, 1800);
+    await fetchRooms();
+  } catch (e) {
+    reserveError.value = e.message;
+  } finally {
+    reserveLoading.value = false;
+  }
+};
 </script>
-
-<style scoped>
-.room-list-container {
-  background-color: #fff;
-  padding: 2rem 2.5rem;
-  border-radius: 14px;
-  box-shadow: 0 12px 32px rgba(109, 140, 240, 0.10);
-}
-
-.header-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.8rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.title {
-  font-size: 26px;
-  font-weight: 700;
-  color: #333;
-  letter-spacing: 1px;
-  margin: 0;
-}
-
-.search-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 320px;
-  max-width: 100%;
-}
-
-.search-input {
-  width: 100%;
-  padding: 10px 18px 10px 36px; /* 调整左侧内边距 */
-  border: none;
-  border-radius: 24px;
-  font-size: 16px;
-  background: #f4f7fe;
-  box-shadow: 0 2px 12px rgba(109, 140, 240, 0.10);
-  transition: box-shadow 0.2s, background 0.2s;
-  outline: none;
-  color: #333;
-}
-
-.search-icon {
-  position: absolute;
-  left: 10px;
-  top: 58%; /* 向下偏移一点 */
-  transform: translateY(-50%);
-  pointer-events: none;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.search-input:focus {
-  background: #fff;
-  box-shadow: 0 4px 18px rgba(109, 140, 240, 0.18);
-  border: 1px solid #6d8cf0; /* 新增：聚焦时显示蓝色边框 */
-}
-
-.search-input:focus + .search-icon {
-  opacity: 1;
-}
-
-@media (max-width: 600px) {
-  .header-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.8rem;
-  }
-  .search-wrapper {
-    width: 100%;
-  }
-}
-
-.loading, .error, .empty {
-  text-align: center;
-  padding: 3rem 1rem;
-  font-size: 17px;
-  color: #666;
-  background-color: #f4f7f6;
-  border-radius: 8px;
-}
-
-.error {
-  color: #d84315;
-  background-color: #fbe9e7;
-}
-
-.room-table {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  border: 1px solid #e8eef8;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.table-header, .table-row {
-  display: grid;
-  grid-template-columns: 1.2fr 1.5fr 0.8fr 1fr 2.5fr;
-  align-items: center;
-  padding: 14px 20px;
-  gap: 1rem;
-}
-
-.table-header {
-  background-color: #f8faff;
-  font-weight: 600;
-  color: #4a4a4a;
-  font-size: 15px;
-  border-bottom: 1px solid #e8eef8;
-}
-
-.table-header .sortable {
-  cursor: pointer;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: color 0.2s;
-}
-
-.table-header .sortable.active {
-  color: #6d8cf0;
-}
-
-.sort-arrow {
-  display: inline-flex;
-  vertical-align: middle;
-  margin-left: 2px;
-}
-
-.table-row {
-  font-size: 16px;
-  color: #555;
-  border-bottom: 1px solid #e8eef8;
-  transition: background-color 0.2s;
-}
-
-.table-row:last-child {
-  border-bottom: none;
-}
-
-.table-row:hover {
-  background-color: #f4f7f6;
-}
-
-.header-item, .row-item {
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.row-item.description {
-  white-space: normal;
-}
-
-.status {
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.status.available {
-  background-color: #e8f5e9;
-  color: #388e3c;
-}
-
-.status.unavailable {
-  background-color: #ffebee;
-  color: #d32f2f;
-}
-</style>

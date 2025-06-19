@@ -1,5 +1,6 @@
 import express from 'express';
-import { createUser, loginUser, createRoom, makeReservation, getAllRooms } from '../controllers/index.js';
+import { createUser, loginUser, createRoom, makeReservation, getAllRooms, getMyReservations, cancelReservation } from '../controllers/index.js';
+import { verifyToken } from '../middlewares/index.js';
 
 const router = express.Router();
 
@@ -12,6 +13,8 @@ router.post('/rooms', createRoom);
 router.get('/rooms', getAllRooms);
 
 // 预约管理
-router.post('/reservations', makeReservation);
+router.post('/reservations', verifyToken, makeReservation);
+router.get('/reservations/my', verifyToken, getMyReservations);
+router.post('/reservations/:id/cancel', verifyToken, cancelReservation);
 
 export default router;
