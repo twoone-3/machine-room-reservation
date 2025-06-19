@@ -1,13 +1,13 @@
--- MySQL Êı¾İ¿â³õÊ¼»¯½Å±¾
+-- MySQL æ•°æ®åº“åˆå§‹åŒ–è„šæœ¬
 CREATE DATABASE IF NOT EXISTS machine_reservation DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 USE machine_reservation;
 
--- É¾³ı±í£¨Èç¹û´æÔÚ£©
+-- åˆ é™¤è¡¨ï¼ˆå¦‚æœå­˜åœ¨ï¼‰
 DROP TABLE IF EXISTS reservations;
 DROP TABLE IF EXISTS rooms;
 DROP TABLE IF EXISTS users;
 
--- ´´½¨ÓÃ»§±í
+-- åˆ›å»ºç”¨æˆ·è¡¨
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -17,19 +17,19 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- ´´½¨»ú·¿±í
+-- åˆ›å»ºæœºæˆ¿è¡¨
 CREATE TABLE IF NOT EXISTS rooms (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     location VARCHAR(255),
     capacity INT NOT NULL,
-    status ENUM('available', 'unavailable') DEFAULT 'available', -- »ú·¿×´Ì¬£ºavailable ¿ÉÓÃ£¬unavailable ²»¿ÉÓÃ
+    status ENUM('available', 'unavailable') DEFAULT 'available', -- æœºæˆ¿çŠ¶æ€ï¼šavailable å¯ç”¨ï¼Œunavailable ä¸å¯ç”¨
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- ´´½¨Ô¤Ô¼±í
+-- åˆ›å»ºé¢„çº¦è¡¨
 CREATE TABLE IF NOT EXISTS reservations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -37,26 +37,26 @@ CREATE TABLE IF NOT EXISTS reservations (
     date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-    status ENUM('booked', 'completed', 'cancelled') NOT NULL DEFAULT 'booked', -- ĞÂÔö×´Ì¬ÊôĞÔ£¬Ä¬ÈÏÎª¡°ÒÑÔ¤Ô¼¡±
+    status ENUM('booked', 'completed', 'cancelled') NOT NULL DEFAULT 'booked', -- æ–°å¢çŠ¶æ€å±æ€§ï¼Œé»˜è®¤ä¸ºâ€œå·²é¢„çº¦â€
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
 );
 
--- ²åÈëÒ»Ğ©²âÊÔÓÃ»§
+-- æ’å…¥ä¸€äº›æµ‹è¯•ç”¨æˆ·
 INSERT INTO users (username, password, role)
 VALUES ('admin', '123456', 'admin'),
         ('Li', '123456', 'teacher'),
         ('Wang', '666666', 'teacher');
 
--- ²åÈëÒ»Ğ©²âÊÔ»ú·¿
+-- æ’å…¥ä¸€äº›æµ‹è¯•æœºæˆ¿
 INSERT INTO rooms (name, location, capacity, status, description)
 VALUES 
-('Ò»ºÅ»ú·¿', '½ÌÑ§Â¥ A Çø 328', 40, 'available', 'Åä±¸40Ì¨¼ÆËã»ú£¬ÊÊºÏÉÏ»ú¿Î³ÌÊ¹ÓÃ'),
-('¶şºÅ»ú·¿', '½ÌÑ§Â¥ B Çø 225', 30, 'available', 'ÓÃÓÚ»ù´¡±à³Ì½ÌÑ§£¬º¬Í¶Ó°Éè±¸');
+('1å·æœºæˆ¿', 'æ•™å­¦æ¥¼ A åŒº 328', 40, 'available', 'é…å¤‡40å°è®¡ç®—æœºï¼Œé€‚åˆä¸Šæœºè¯¾ç¨‹ä½¿ç”¨'),
+('2å·æœºæˆ¿', 'æ•™å­¦æ¥¼ B åŒº 225', 30, 'unavailable', 'ç”¨äºåŸºç¡€ç¼–ç¨‹æ•™å­¦ï¼Œå«æŠ•å½±è®¾å¤‡');
 
--- ²åÈë²âÊÔÔ¤Ô¼¼ÇÂ¼£¨¿ÉÑ¡£©
+-- æ’å…¥æµ‹è¯•é¢„çº¦è®°å½•ï¼ˆå¯é€‰ï¼‰
 INSERT INTO reservations (user_id, room_id, date, start_time, end_time, status)
 VALUES (1, 1, '2025-06-10', '10:00:00', '12:00:00', 'booked'),
         (2, 2, '2025-06-11', '14:00:00', '16:00:00', 'booked'),

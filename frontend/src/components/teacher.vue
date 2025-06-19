@@ -1,7 +1,6 @@
 <template>
   <div class="teacher-page">
     <navbar :role="'teacher'" @nav="currentPage = $event" @logout="logout" />
-    <p>欢迎 {{ userInfo.username }}教师!</p>
     <room-list v-if="currentPage === 'room'" />
     <reservation-list v-else-if="currentPage === 'reservation'" />
     <back-to-top />
