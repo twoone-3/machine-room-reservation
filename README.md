@@ -38,14 +38,8 @@ cd machine-room-reservation
 
 ### 2. 安装依赖
 
-```bash
-# 前端
-cd frontend
-npm install
-
-# 后端
-cd ../backend
-npm install
+```bat
+npm_install.bat
 ```
 
 ### 3. 配置数据库
