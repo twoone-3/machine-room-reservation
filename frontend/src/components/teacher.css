@@ -71,10 +71,6 @@
   background: #f4f7f6;
   border-radius: 8px;
 }
-.error {
-  color: #d84315;
-  background: #fbe9e7;
-}
 
 /* 表格结构 */
 .room-table,
@@ -397,11 +393,12 @@
 .reserve-form .error {
   color: #d84315;
   background: #fbe9e7;
-  border-radius: 6px;
-  padding: 6px 10px;
+  border-radius: 10px;
+  margin: 32px auto 0 auto;
+  padding: 10px 14px;
   margin-top: 0.5rem;
-  font-size: 14px;
-  text-align: left;
+  font-size: 16px;
+  text-align: center;
 }
 
 /* 响应式 */

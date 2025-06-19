@@ -279,9 +279,24 @@ const submitReservation = async () => {
   const start = `${timeParts.value.startHour}:${timeParts.value.startMinute}`;
   const end = `${timeParts.value.endHour}:${timeParts.value.endMinute}`;
   if (end <= start) {
-    reserveError.value = '结束时间必须大于开始时间';
+    reserveError.value = '结束时间必须晚于开始时间';
     return;
   }
+
+  // 新增：校验开始和结束时间不能早于当前时间
+  const now = new Date();
+  const selectedDate = new Date(reserveForm.value.date);
+  const startDateTime = new Date(`${reserveForm.value.date}T${start}:00`);
+  const endDateTime = new Date(`${reserveForm.value.date}T${end}:00`);
+  // 只校验今天的预约
+  if (
+    selectedDate.toDateString() === now.toDateString() &&
+    (startDateTime < now || endDateTime < now)
+  ) {
+    reserveError.value = '请选择合理的时间哦~';
+    return;
+  }
+
   reserveLoading.value = true;
   try {
     const token = localStorage.getItem('token');
@@ -313,4 +328,3 @@ const submitReservation = async () => {
   }
 };
 </script>
-
