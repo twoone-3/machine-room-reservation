@@ -4,10 +4,12 @@
     <button @click="logout">退出登录</button>
     <p>欢迎 {{ userInfo.username }}教师!</p>
   </div>
+  <navbar :role="'teacher'" />
 </template>
 
 <script setup>
 import { ref } from 'vue';
+import navbar from './navbar.vue';
 
 const userInfo = ref({
   username: localStorage.getItem('username') || ''

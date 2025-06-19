@@ -1,5 +1,6 @@
 <template>
   <div class="admin-page">
+    <navbar :role="'admin'" />
     <!-- 管理员页面内容 -->
     <button @click="logout">退出登录</button>
     <p>欢迎 {{ userInfo.username }}管理员!</p>
@@ -8,6 +9,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import navbar from './navbar.vue';
 
 const userInfo = ref({
   username: localStorage.getItem('username') || ''
