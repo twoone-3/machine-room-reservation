@@ -1,3 +1,4 @@
+/*!40101 SET NAMES utf8 */;
 -- MySQL 数据库初始化脚本
 CREATE DATABASE IF NOT EXISTS machine_reservation DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 USE machine_reservation;
