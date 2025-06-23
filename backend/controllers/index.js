@@ -44,39 +44,11 @@ export const createRoom = async (req, res) => {
   // TODO: 实现机房创建
 };
 
-// 获取所有机房信息（动态附加明天的可用状态）
+// 获取所有机房信息
 export const getAllRooms = async (req, res) => {
   try {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dateString = tomorrow.toISOString().split('T')[0];
-
-    // 查询明天所有已预约的机房及预约数
-    const bookedCounts = await Reservation.findAll({
-      where: { date: dateString, status: 'booked' },
-      attributes: ['room_id', [fn('COUNT', col('id')), 'count']],
-      group: ['room_id'],
-      raw: true
-    });
-
-    // 转换为 Map，便于查找
-    const bookingCountsMap = bookedCounts.reduce((acc, item) => {
-      acc[item.room_id] = item.count;
-      return acc;
-    }, {});
-
     const rooms = await Room.findAll();
-
-    // 附加可用状态
-    const roomsWithStatus = rooms.map(room => {
-      const roomJson = room.toJSON();
-      const count = bookingCountsMap[roomJson.id] || 0;
-      // 一天6个时间段，预约满则不可用
-      if (count >= 6) roomJson.status = 'unavailable';
-      return roomJson;
-    });
-
-    res.json(roomsWithStatus);
+    res.json(rooms);
   } catch (error) {
     console.error('获取机房信息出错:', error);
     res.status(500).json({ message: '获取机房信息出错', error: error.message });
