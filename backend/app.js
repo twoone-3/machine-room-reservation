@@ -3,7 +3,7 @@ import cors from 'cors';
 import routes from './routes/index.js';
 import { connectDB } from './config/db.js';
 import { sequelize, syncModels } from './models/index.js'; // 导入 sequelize 和 syncModels
-import { completeReservations } from './tasks/completeReservations.js';
+import completeReservations from './tasks/completeReservations.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
