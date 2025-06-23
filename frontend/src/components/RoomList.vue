@@ -100,7 +100,7 @@
                     class="time-slot-btn"
                     :class="{
                       'disabled': slot.disabled,
-                      'selected': selectedSlot && selectedSlot.label === slot.label
+                      'selected': selectedSlots.some(s => s.label === slot.label)
                     }"
                     :disabled="slot.disabled"
                     @click="selectTimeSlot(slot)"
@@ -110,7 +110,7 @@
                 </div>
               </div>
               <div class="dialog-actions">
-                <button type="submit" class="dialog-btn confirm" :disabled="reserveLoading || !selectedSlot">
+                <button type="submit" class="dialog-btn confirm" :disabled="reserveLoading || selectedSlots.length === 0">
                   <span v-if="reserveLoading" class="loading-spinner"></span>
                   确认预约
                 </button>
@@ -172,7 +172,7 @@ const reserveError = ref('');
 const showSuccessDialog = ref(false);
 const bookedSlots = ref([]);
 const loadingSlots = ref(false);
-const selectedSlot = ref(null);
+const selectedSlots = ref([]);
 
 // ====== 表头定义 ======
 const columns = [
@@ -258,11 +258,22 @@ const pagedRooms = computed(() => {
   return filteredRooms.value.slice(start, start + pageSize);
 });
 
+// 监听搜索变化，自动返回第一页
+watch(search, () => {
+  page.value = 1;
+});
+
 // ====== 预约弹窗相关 ======
 
 // 选择时间段
 const selectTimeSlot = slot => {
-  if (!slot.disabled) selectedSlot.value = slot;
+  if (slot.disabled) return;
+  const index = selectedSlots.value.findIndex(s => s.label === slot.label);
+  if (index > -1) {
+    selectedSlots.value.splice(index, 1);
+  } else {
+    selectedSlots.value.push(slot);
+  }
 };
 
 // 计算时间段禁用状态
@@ -293,7 +304,7 @@ const fetchBookedSlots = async (roomId, date) => {
   } finally {
     loadingSlots.value = false;
     // 自动选择第一个可用时间段
-    selectedSlot.value = computedTimeSlots.value.find(s => !s.disabled) || null;
+    selectedSlots.value = [];
   }
 };
 
@@ -309,7 +320,7 @@ const openReserveDialog = room => {
   reserveRoom.value = room;
   reserveForm.value.date = minDate;
   reserveError.value = '';
-  selectedSlot.value = null;
+  selectedSlots.value = [];
   showReserveDialog.value = true;
   fetchBookedSlots(room.id, minDate);
 };
@@ -319,41 +330,49 @@ const closeReserveDialog = () => {
   showReserveDialog.value = false;
   reserveRoom.value = null;
   bookedSlots.value = [];
+  selectedSlots.value = [];
 };
 
 // 提交预约
 const submitReservation = async () => {
   reserveError.value = '';
-  if (!reserveForm.value.date || !selectedSlot.value) {
-    reserveError.value = '请选择一个可用的日期和时间段';
+  if (!reserveForm.value.date || selectedSlots.value.length === 0) {
+    reserveError.value = '请选择一个可用的日期和至少一个时间段';
     return;
   }
   reserveLoading.value = true;
   try {
     const token = localStorage.getItem('token');
-    const res = await fetch(`${apiBase}/api/reservations`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token
-      },
-      body: JSON.stringify({
-        room_id: reserveRoom.value.id,
-        date: reserveForm.value.date,
-        start_time: selectedSlot.value.start,
-        end_time: selectedSlot.value.end
-      })
+    const reservationPromises = selectedSlots.value.map(slot => {
+      return fetch(`${apiBase}/api/reservations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
+        body: JSON.stringify({
+          room_id: reserveRoom.value.id,
+          date: reserveForm.value.date,
+          start_time: slot.start,
+          end_time: slot.end
+        })
+      }).then(async (res) => {
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ message: `预约 ${slot.label} 失败` }));
+          throw new Error(err.message);
+        }
+        return res.json();
+      });
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: '预约失败' }));
-      throw new Error(err.message);
-    }
+
+    await Promise.all(reservationPromises);
+
     closeReserveDialog();
     showSuccessDialog.value = true;
     setTimeout(() => { showSuccessDialog.value = false; }, 1200);
     await fetchRooms();
   } catch (e) {
-    reserveError.value = e.message;
+    reserveError.value = e.message || '部分或全部预约失败，请检查后重试';
   } finally {
     reserveLoading.value = false;
   }
