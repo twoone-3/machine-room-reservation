@@ -90,16 +90,27 @@
                   required
                 />
               </div>
-              <div class="form-row">
+              <div class="form-row form-row-align-top">
                 <label>时间段</label>
-                <select v-model="selectedSlot" required>
-                  <option v-for="slot in timeSlots" :key="slot.label" :value="slot">
+                <div class="time-slots-grid">
+                  <button
+                    v-for="slot in computedTimeSlots"
+                    :key="slot.label"
+                    type="button"
+                    class="time-slot-btn"
+                    :class="{
+                      'disabled': slot.disabled,
+                      'selected': selectedSlot && selectedSlot.label === slot.label
+                    }"
+                    :disabled="slot.disabled"
+                    @click="selectTimeSlot(slot)"
+                  >
                     {{ slot.label }}
-                  </option>
-                </select>
+                  </button>
+                </div>
               </div>
               <div class="dialog-actions">
-                <button type="submit" class="dialog-btn confirm" :disabled="reserveLoading">
+                <button type="submit" class="dialog-btn confirm" :disabled="reserveLoading || !selectedSlot">
                   <span v-if="reserveLoading" class="loading-spinner"></span>
                   确认预约
                 </button>
@@ -129,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watchEffect } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import PinyinMatch from 'pinyin-match';
 import Pagination from './Pagination.vue';
 
@@ -221,12 +232,8 @@ const reserveForm = ref({ date: '', start_time: '', end_time: '' });
 const reserveLoading = ref(false);
 const reserveError = ref('');
 const showSuccessDialog = ref(false);
-const timeParts = ref({
-  startHour: '09',
-  startMinute: '00',
-  endHour: '10',
-  endMinute: '00'
-});
+const bookedSlots = ref([]);
+const loadingSlots = ref(false);
 
 // 日期范围：明天到一周后
 const todayObj = new Date();
@@ -246,32 +253,70 @@ const timeSlots = [
   { label: '18:00-20:00', start: '18:00', end: '20:00' },
   { label: '20:00-22:00', start: '20:00', end: '22:00' }
 ];
-const selectedSlot = ref(timeSlots[0]);
+const selectedSlot = ref(null);
 
-// 监听时间选择的变化，并自动更新表单数据
-watchEffect(() => {
-  reserveForm.value.start_time = `${timeParts.value.startHour}:${timeParts.value.startMinute}`;
-  reserveForm.value.end_time = `${timeParts.value.endHour}:${timeParts.value.endMinute}`;
+const selectTimeSlot = (slot) => {
+  if (!slot.disabled) {
+    selectedSlot.value = slot;
+  }
+};
+
+const computedTimeSlots = computed(() => {
+  return timeSlots.map(slot => {
+    const isDisabled = bookedSlots.value.some(booked => booked.start_time.slice(0, 5) === slot.start);
+    return { ...slot, disabled: isDisabled };
+  });
+});
+
+const fetchBookedSlots = async (roomId, date) => {
+  if (!roomId || !date) return;
+  loadingSlots.value = true;
+  bookedSlots.value = [];
+  try {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${apiBase}/api/rooms/${roomId}/reservations?date=${date}`, {
+      headers: { 'Authorization': token }
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: '无法获取预约时段' }));
+        throw new Error(err.message);
+    }
+    bookedSlots.value = await res.json();
+  } catch (e) {
+    reserveError.value = e.message;
+  } finally {
+    loadingSlots.value = false;
+    // 自动选择第一个可用的时间段
+    selectedSlot.value = computedTimeSlots.value.find(s => !s.disabled) || null;
+  }
+};
+
+watch(() => reserveForm.value.date, (newDate) => {
+  if (showReserveDialog.value && reserveRoom.value) {
+    fetchBookedSlots(reserveRoom.value.id, newDate);
+  }
 });
 
 // 打开弹窗时初始化
 const openReserveDialog = room => {
   reserveRoom.value = room;
   reserveForm.value.date = minDate;
-  selectedSlot.value = timeSlots[0];
   reserveError.value = '';
+  selectedSlot.value = null; // 打开时重置选择
   showReserveDialog.value = true;
+  fetchBookedSlots(room.id, minDate);
 };
 const closeReserveDialog = () => {
   showReserveDialog.value = false;
   reserveRoom.value = null;
+  bookedSlots.value = []; // 关闭时重置
 };
 
 // 提交时用选中的时间段
 const submitReservation = async () => {
   reserveError.value = '';
   if (!reserveForm.value.date || !selectedSlot.value) {
-    reserveError.value = '请选择日期和时间段';
+    reserveError.value = '请选择一个可用的日期和时间段';
     return;
   }
   reserveLoading.value = true;

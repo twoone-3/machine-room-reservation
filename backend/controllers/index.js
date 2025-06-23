@@ -123,6 +123,32 @@ export const getMyReservations = async (req, res) => {
     }
 };
 
+// 根据机房ID和日期获取预约记录
+export const getReservationsByRoomAndDate = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const { date } = req.query;
+
+        if (!date) {
+            return res.status(400).json({ message: '必须提供日期' });
+        }
+
+        const reservations = await Reservation.findAll({
+            where: {
+                room_id: roomId,
+                date: date,
+                status: 'booked'
+            },
+            attributes: ['start_time'] // 只需要开始时间来判断
+        });
+
+        res.json(reservations);
+    } catch (error) {
+        console.error('获取机房预约信息失败:', error);
+        res.status(500).json({ message: '服务器内部错误', error: error.message });
+    }
+};
+
 // 创建预约
 export const makeReservation = async (req, res) => {
     try {

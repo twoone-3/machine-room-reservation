@@ -3,6 +3,7 @@ import cors from 'cors';
 import routes from './routes/index.js';
 import { connectDB } from './config/db.js';
 import { sequelize, syncModels } from './models/index.js'; // 导入 sequelize 和 syncModels
+import { completeReservations } from './tasks/completeReservations.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -36,3 +37,7 @@ app.use('/api', routes);
 app.listen(PORT, () => {
   console.log(`服务器正在运行：http://localhost:${PORT}`);
 });
+
+setInterval(() => {
+  completeReservations().catch(console.error);
+}, 10 * 60 * 1000); // 每10分钟改变预约状态的任务
