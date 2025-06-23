@@ -1,4 +1,4 @@
-import { User, Room, Reservation } from '../models/index.js';
+import { sequelize, User, Room, Reservation } from '../models/index.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { Op, fn, col } from 'sequelize';
@@ -101,17 +101,19 @@ export const getReservationsByRoomAndDate = async (req, res) => {
 
 // 创建预约（防止时间段冲突）
 export const makeReservation = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { room_id, date, start_time, end_time } = req.body;
     if (!room_id || !date || !start_time || !end_time) {
       return res.status(400).json({ message: '参数不完整' });
     }
     // 检查机房是否存在
-    const room = await Room.findByPk(room_id);
+    const room = await Room.findByPk(room_id, { transaction: t });
     if (!room) {
+      await t.rollback();
       return res.status(400).json({ message: '机房不存在' });
     }
-    // 检查时间段冲突
+    // 检查时间段冲突，并使用行级锁防止并发问题
     const conflict = await Reservation.findOne({
       where: {
         room_id,
@@ -123,9 +125,12 @@ export const makeReservation = async (req, res) => {
             end_time: { [Op.gt]: start_time }
           }
         ]
-      }
+      },
+      lock: t.LOCK.UPDATE, // 在事务中锁定查询到的行
+      transaction: t
     });
     if (conflict) {
+      await t.rollback();
       return res.status(400).json({ message: '该时间段已被预约' });
     }
     // 创建预约
@@ -136,9 +141,12 @@ export const makeReservation = async (req, res) => {
       start_time,
       end_time,
       status: 'booked'
-    });
+    }, { transaction: t });
+
+    await t.commit(); // 提交事务
     res.json({ message: '预约成功', reservation });
   } catch (error) {
+    await t.rollback(); // 发生错误时回滚事务
     console.error('预约失败:', error);
     res.status(500).json({ message: '预约失败', error: error.message });
   }
