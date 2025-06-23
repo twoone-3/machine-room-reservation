@@ -171,6 +171,7 @@
   background: #e3f2fd;
   color: #1565c0;
 }
+/* 合并重复的 .status.cancelled 样式 */
 .status.cancelled {
   background: #f5f5f5;
   color: #616161;
@@ -234,7 +235,7 @@
   background: none;
 }
 
-/* Dialog 公共样式优化 */
+/* Dialog 公共样式 */
 .dialog-mask {
   position: fixed;
   z-index: 9999;
@@ -386,17 +387,17 @@
   background: #fff;
 }
 
-/* 新增：图形化时间段选择器样式 */
+/* 时间段选择器样式 */
 .form-row-align-top {
   align-items: flex-start;
 }
 .form-row-align-top label {
-  padding-top: 8px; /* 让标签和按钮网格顶部对齐 */
+  padding-top: 8px; /* 标签顶部对齐按钮网格 */
 }
 
 .time-slots-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 每行显示3个时间段 */
+  grid-template-columns: repeat(3, 1fr); /* 每行3个时间段 */
   gap: 10px;
   flex-grow: 1;
 }
@@ -407,7 +408,6 @@
   border-radius: 8px;
   font-size: 14px;
   background: #f4f7fe;
-  /* 改为平滑、稳重的动画曲线 */
   transition: all 0.2s ease-in-out;
   cursor: pointer;
   text-align: center;
@@ -417,15 +417,12 @@
 }
 
 .time-slot-btn.selected {
-  /* 移除背景色填充，改为通过边框和阴影强调 */
-  background: #eaf0ff; /* 使用与悬停时类似的背景色 */
-  color: #5778d0;    /* 使用与悬停时类似的字体颜色 */
+  /* 选中态：高亮边框和阴影 */
+  background: #eaf0ff;
+  color: #5778d0;
   font-weight: 600;
-  /* 使用更粗的边框来表示选中 */
   border: 1px solid #6d8cf0;
-  /* 增强阴影和上浮效果 */
   box-shadow: 0 2px 10px rgba(109, 140, 240, 0.3);
-  /* 调整内边距以补偿边框增厚，保持按钮大小不变 */
   padding: 7px 9px;
 }
 
@@ -453,7 +450,7 @@
   text-align: center;
 }
 
-/* 响应式 */
+/* 响应式布局 */
 @media (max-width: 900px) {
   .table-header, .table-row {
     grid-template-columns: 1fr 1.2fr 0.7fr 0.9fr 1.5fr;
@@ -495,6 +492,7 @@
     text-align: center;
   }
   .reservation-table .table-row { padding: 12px 4px; }
+  /* 隐藏部分列以适配小屏 */
   .reservation-table .header-item:nth-child(2), .reservation-table .row-item:nth-child(2),
   .reservation-table .header-item:nth-child(5), .reservation-table .row-item:nth-child(5) {
     display: none;

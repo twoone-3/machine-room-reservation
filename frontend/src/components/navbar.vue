@@ -2,6 +2,7 @@
   <nav class="navbar">
     <div class="navbar-title">机房预约系统</div>
     <ul class="navbar-menu">
+      <!-- 菜单根据角色动态生成 -->
       <li v-for="item in menu" :key="item.label">
         <a href="#" @click.prevent="$emit('nav', item.key)">{{ item.label }}</a>
       </li>
@@ -16,6 +17,7 @@
 <script setup>
 import { computed } from 'vue';
 
+// 角色由父组件传入
 const props = defineProps({
   role: {
     type: String,
@@ -23,22 +25,22 @@ const props = defineProps({
   }
 });
 
+// 根据角色生成菜单
 const menu = computed(() => {
-  if (props.role === 'admin') {
-    return [
-      { label: '机房列表', key: 'room' },
-      { label: '用户管理', key: 'user' }
-    ];
-  } else {
-    return [
-      { label: '机房列表', key: 'room' },
-      { label: '预约记录', key: 'reservation' }
-    ];
-  }
+  return props.role === 'admin'
+    ? [
+        { label: '机房列表', key: 'room' },
+        { label: '用户管理', key: 'user' }
+      ]
+    : [
+        { label: '机房列表', key: 'room' },
+        { label: '预约记录', key: 'reservation' }
+      ];
 });
 </script>
 
 <style scoped>
+/* 顶部导航栏整体样式 */
 .navbar {
   display: flex;
   align-items: center;
@@ -52,11 +54,11 @@ const menu = computed(() => {
   font-family: 'Arial', 'Helvetica Neue', Helvetica, sans-serif;
   transition: box-shadow 0.3s;
 }
-
 .navbar:hover {
   box-shadow: 0 18px 40px rgba(109, 140, 240, 0.16);
 }
 
+/* 系统标题 */
 .navbar-title {
   font-size: 32px;
   font-weight: 700;
@@ -65,6 +67,7 @@ const menu = computed(() => {
   user-select: none;
 }
 
+/* 菜单样式 */
 .navbar-menu {
   list-style: none;
   display: flex;
@@ -72,7 +75,6 @@ const menu = computed(() => {
   margin: 0;
   padding: 0;
 }
-
 .navbar-menu a {
   color: #6d8cf0;
   text-decoration: none;
@@ -84,20 +86,19 @@ const menu = computed(() => {
   position: relative;
   outline: none;
 }
-
 .navbar-menu a:hover,
 .navbar-menu a:focus-visible {
   background: #f4f7f6;
   color: #5778d0;
   box-shadow: 0 2px 8px rgba(109, 140, 240, 0.08);
 }
-
 .navbar-menu a.active {
   background: linear-gradient(90deg, #6d8cf0 60%, #8fa7e9 100%);
   color: #fff;
   box-shadow: 0 4px 16px rgba(109, 140, 240, 0.13);
 }
 
+/* 用户信息与退出按钮 */
 .navbar-user {
   font-size: 18px;
   color: #6d8cf0;
@@ -111,7 +112,6 @@ const menu = computed(() => {
   margin-left: 1.5rem;
   letter-spacing: 0.5px;
 }
-
 .logout-btn {
   margin-left: 18px;
   background: #fff;
@@ -123,13 +123,12 @@ const menu = computed(() => {
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
-
 .logout-btn:hover {
   background: #6d8cf0;
   color: #fff;
 }
 
-/* 新增/优化响应式设计 */
+/* 响应式设计：适配不同屏幕宽度 */
 @media (max-width: 900px) {
   .navbar {
     padding: 14px 4vw;
@@ -158,7 +157,6 @@ const menu = computed(() => {
     margin-left: 10px;
   }
 }
-
 @media (max-width: 600px) {
   .navbar {
     flex-direction: column;

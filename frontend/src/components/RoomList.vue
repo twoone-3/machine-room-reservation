@@ -144,16 +144,37 @@ import { ref, onMounted, computed, watch } from 'vue';
 import PinyinMatch from 'pinyin-match';
 import Pagination from './Pagination.vue';
 
-const today = new Date().toISOString().split('T')[0];
+// ====== 基础数据 ======
+const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+const pageSize = 10;
+const today = new Date();
+const minDateObj = new Date(today);
+minDateObj.setDate(today.getDate() + 1);
+const maxDateObj = new Date(today);
+maxDateObj.setDate(today.getDate() + 7);
+const minDate = minDateObj.toISOString().split('T')[0];
+const maxDate = maxDateObj.toISOString().split('T')[0];
 
+// ====== 响应式状态 ======
 const rooms = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const search = ref('');
 const sortKey = ref('status');
 const sortOrder = ref('asc');
-const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+const page = ref(1);
 
+const showReserveDialog = ref(false);
+const reserveRoom = ref(null);
+const reserveForm = ref({ date: '', start_time: '', end_time: '' });
+const reserveLoading = ref(false);
+const reserveError = ref('');
+const showSuccessDialog = ref(false);
+const bookedSlots = ref([]);
+const loadingSlots = ref(false);
+const selectedSlot = ref(null);
+
+// ====== 表头定义 ======
 const columns = [
   { key: 'name', label: '机房名称' },
   { key: 'location', label: '位置' },
@@ -163,16 +184,27 @@ const columns = [
   { key: 'action', label: '操作' }
 ];
 
+// ====== 时间段定义 ======
+const timeSlots = [
+  { label: '08:00-10:00', start: '08:00', end: '10:00' },
+  { label: '10:00-12:00', start: '10:00', end: '12:00' },
+  { label: '14:00-16:00', start: '14:00', end: '16:00' },
+  { label: '16:00-18:00', start: '16:00', end: '18:00' },
+  { label: '18:00-20:00', start: '18:00', end: '20:00' },
+  { label: '20:00-22:00', start: '20:00', end: '22:00' }
+];
+
+// ====== 机房数据获取 ======
 const fetchRooms = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const response = await fetch(`${apiBase}/api/rooms`);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: '获取机房列表失败' }));
-      throw new Error(errorData.message);
+    const res = await fetch(`${apiBase}/api/rooms`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: '获取机房列表失败' }));
+      throw new Error(err.message);
     }
-    rooms.value = await response.json();
+    rooms.value = await res.json();
   } catch (e) {
     error.value = e.message;
     console.error(e);
@@ -181,6 +213,7 @@ const fetchRooms = async () => {
   }
 };
 
+// ====== 排序 ======
 const sortBy = key => {
   if (sortKey.value === key) {
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
@@ -190,8 +223,10 @@ const sortBy = key => {
   }
 };
 
+// ====== 状态文本 ======
 const statusText = status => status === 'available' ? '可用' : '不可用';
 
+// ====== 搜索与排序 ======
 const filteredRooms = computed(() => {
   const keyword = search.value.trim().toLowerCase();
   let filtered = rooms.value.filter(room => {
@@ -217,57 +252,28 @@ const filteredRooms = computed(() => {
   });
 });
 
-const page = ref(1);
-const pageSize = 10;
+// ====== 分页 ======
 const pagedRooms = computed(() => {
   const start = (page.value - 1) * pageSize;
   return filteredRooms.value.slice(start, start + pageSize);
 });
 
-onMounted(fetchRooms);
+// ====== 预约弹窗相关 ======
 
-const showReserveDialog = ref(false);
-const reserveRoom = ref(null);
-const reserveForm = ref({ date: '', start_time: '', end_time: '' });
-const reserveLoading = ref(false);
-const reserveError = ref('');
-const showSuccessDialog = ref(false);
-const bookedSlots = ref([]);
-const loadingSlots = ref(false);
-
-// 日期范围：明天到一周后
-const todayObj = new Date();
-const minDateObj = new Date(todayObj);
-minDateObj.setDate(todayObj.getDate() + 1);
-const maxDateObj = new Date(todayObj);
-maxDateObj.setDate(todayObj.getDate() + 7);
-const minDate = minDateObj.toISOString().split('T')[0];
-const maxDate = maxDateObj.toISOString().split('T')[0];
-
-// 固定6个时间段
-const timeSlots = [
-  { label: '08:00-10:00', start: '08:00', end: '10:00' },
-  { label: '10:00-12:00', start: '10:00', end: '12:00' },
-  { label: '14:00-16:00', start: '14:00', end: '16:00' },
-  { label: '16:00-18:00', start: '16:00', end: '18:00' },
-  { label: '18:00-20:00', start: '18:00', end: '20:00' },
-  { label: '20:00-22:00', start: '20:00', end: '22:00' }
-];
-const selectedSlot = ref(null);
-
-const selectTimeSlot = (slot) => {
-  if (!slot.disabled) {
-    selectedSlot.value = slot;
-  }
+// 选择时间段
+const selectTimeSlot = slot => {
+  if (!slot.disabled) selectedSlot.value = slot;
 };
 
-const computedTimeSlots = computed(() => {
-  return timeSlots.map(slot => {
-    const isDisabled = bookedSlots.value.some(booked => booked.start_time.slice(0, 5) === slot.start);
-    return { ...slot, disabled: isDisabled };
-  });
-});
+// 计算时间段禁用状态
+const computedTimeSlots = computed(() =>
+  timeSlots.map(slot => ({
+    ...slot,
+    disabled: bookedSlots.value.some(booked => booked.start_time.slice(0, 5) === slot.start)
+  }))
+);
 
+// 获取已预约时间段
 const fetchBookedSlots = async (roomId, date) => {
   if (!roomId || !date) return;
   loadingSlots.value = true;
@@ -278,41 +284,44 @@ const fetchBookedSlots = async (roomId, date) => {
       headers: { 'Authorization': token }
     });
     if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: '无法获取预约时段' }));
-        throw new Error(err.message);
+      const err = await res.json().catch(() => ({ message: '无法获取预约时段' }));
+      throw new Error(err.message);
     }
     bookedSlots.value = await res.json();
   } catch (e) {
     reserveError.value = e.message;
   } finally {
     loadingSlots.value = false;
-    // 自动选择第一个可用的时间段
+    // 自动选择第一个可用时间段
     selectedSlot.value = computedTimeSlots.value.find(s => !s.disabled) || null;
   }
 };
 
+// 监听日期变化，自动刷新时间段
 watch(() => reserveForm.value.date, (newDate) => {
   if (showReserveDialog.value && reserveRoom.value) {
     fetchBookedSlots(reserveRoom.value.id, newDate);
   }
 });
 
-// 打开弹窗时初始化
+// 打开预约弹窗
 const openReserveDialog = room => {
   reserveRoom.value = room;
   reserveForm.value.date = minDate;
   reserveError.value = '';
-  selectedSlot.value = null; // 打开时重置选择
+  selectedSlot.value = null;
   showReserveDialog.value = true;
   fetchBookedSlots(room.id, minDate);
 };
+
+// 关闭预约弹窗
 const closeReserveDialog = () => {
   showReserveDialog.value = false;
   reserveRoom.value = null;
-  bookedSlots.value = []; // 关闭时重置
+  bookedSlots.value = [];
 };
 
-// 提交时用选中的时间段
+// 提交预约
 const submitReservation = async () => {
   reserveError.value = '';
   if (!reserveForm.value.date || !selectedSlot.value) {
@@ -349,4 +358,7 @@ const submitReservation = async () => {
     reserveLoading.value = false;
   }
 };
+
+// 页面加载时获取机房数据
+onMounted(fetchRooms);
 </script>

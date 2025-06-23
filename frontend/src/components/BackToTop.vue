@@ -27,33 +27,28 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 
-const visible = ref(false);
-const buttonRef = ref(null); // 1. 创建一个 ref 来引用按钮元素
-const scrollThreshold = 150; // 显示按钮的滚动阈值
+const visible = ref(false);         // 控制按钮显示
+const buttonRef = ref(null);        // 按钮元素引用
+const scrollThreshold = 150;        // 滚动距离阈值
 
-// 滚动事件处理函数
+// 滚动事件处理：判断是否显示按钮
 const handleScroll = () => {
-  // 使用 requestAnimationFrame 来优化性能，确保只在浏览器下一次重绘前更新状态
   window.requestAnimationFrame(() => {
     visible.value = window.scrollY > scrollThreshold;
   });
 };
 
-// 平滑滚动到页面顶部
+// 平滑滚动到页面顶部，并移除按钮焦点
 const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth',
-  });
-  // 2. 点击后让按钮失去焦点，移除 :focus 状态
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   buttonRef.value?.blur();
 };
 
+// 组件挂载时绑定事件，卸载时解绑
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true });
-  handleScroll(); // 组件挂载时检查一次初始状态
+  handleScroll(); // 初始化时检查一次
 });
-
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
 });
@@ -104,6 +99,7 @@ onUnmounted(() => {
   transform: translateY(-2px);
 }
 
+/* 渐变动画 */
 @keyframes gradient-move {
   0% {
     background-position: 0% 50%;
@@ -118,13 +114,13 @@ onUnmounted(() => {
 .fade-in-up-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
-
 .fade-in-up-enter-from,
 .fade-in-up-leave-to {
   opacity: 0;
   transform: translateY(20px);
 }
 
+/* 移动端适配 */
 @media (max-width: 600px) {
   .back-to-top {
     right: 16px;

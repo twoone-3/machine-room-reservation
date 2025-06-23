@@ -7,15 +7,14 @@ const emit = defineEmits(['login-success']);
 const username = ref('');
 const password = ref('');
 const showPassword = ref(false);
-const remember = ref(false); // 新增
+const remember = ref(false);
 const loading = ref(false);
 const error = ref(null);
 const successMessage = ref(null);
 const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
-
 const userInfo = ref(null);
 
-// 自动填充已记住的用户名和密码
+// 页面加载时自动填充已记住的用户名和密码
 onMounted(() => {
   const saved = localStorage.getItem('rememberPassword');
   if (saved) {
@@ -24,14 +23,18 @@ onMounted(() => {
       username.value = u || '';
       password.value = p || '';
       remember.value = true;
-    } catch {}
+    } catch {
+      // 忽略解析错误
+    }
   }
 });
 
+// 登录逻辑
 const login = async () => {
   error.value = null;
   successMessage.value = null;
 
+  // 表单校验
   if (!username.value.trim()) {
     error.value = '用户名字段不能为空';
     return;
@@ -53,6 +56,7 @@ const login = async () => {
 
   loading.value = true;
   try {
+    // 发起登录请求
     const response = await fetch(`${apiBase}/api/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -63,6 +67,7 @@ const login = async () => {
       throw new Error(errorData.message || '登录失败');
     }
     const data = await response.json();
+    // 登录成功，保存用户信息
     localStorage.setItem('token', data.token);
     localStorage.setItem('role', data.role);
     localStorage.setItem('username', data.username);
@@ -100,6 +105,7 @@ const login = async () => {
               placeholder="请输入密码"
             />
             <span class="eye-icon" @click="showPassword = !showPassword" :title="showPassword ? '隐藏密码' : '显示密码'">
+              <!-- 密码可见/隐藏切换 -->
               <svg v-if="showPassword" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6d8cf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <ellipse cx="12" cy="12" rx="7" ry="5"></ellipse>
                 <circle cx="12" cy="12" r="2"></circle>

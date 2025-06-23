@@ -101,6 +101,7 @@
 import { ref, onMounted, computed } from 'vue';
 import Pagination from './Pagination.vue';
 
+// ====== 响应式状态 ======
 const reservations = ref([]);
 const loading = ref(true);
 const error = ref(null);
@@ -114,12 +115,14 @@ const showDialog = ref(false);
 const dialogReservationId = ref(null);
 const showSuccessDialog = ref(false);
 
+// 预约状态文本映射
 const statusText = status => ({
   booked: '已预约',
   completed: '已完成',
   cancelled: '已取消'
 }[status] || '未知');
 
+// 获取当前用户预约记录
 const fetchReservations = async () => {
   loading.value = true;
   error.value = null;
@@ -145,6 +148,7 @@ const fetchReservations = async () => {
   }
 };
 
+// 搜索与排序
 const filteredReservations = computed(() => {
   const keyword = search.value.trim().toLowerCase();
   const statusOrder = { booked: 0, completed: 1, cancelled: 2 };
@@ -158,20 +162,24 @@ const filteredReservations = computed(() => {
     .sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
 });
 
+// 分页
 const pagedReservations = computed(() => {
   const start = (page.value - 1) * pageSize;
   return filteredReservations.value.slice(start, start + pageSize);
 });
 
+// 打开取消预约确认弹窗
 const openCancelDialog = id => {
   dialogReservationId.value = id;
   showDialog.value = true;
 };
+// 关闭弹窗
 const closeDialog = () => {
   showDialog.value = false;
   dialogReservationId.value = null;
 };
 
+// 取消预约
 const cancelReservation = async () => {
   const id = dialogReservationId.value;
   if (!id) return;
@@ -197,6 +205,7 @@ const cancelReservation = async () => {
   }
 };
 
+// 页面加载时获取预约数据
 onMounted(fetchReservations);
 </script>
 
