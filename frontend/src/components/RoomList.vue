@@ -73,10 +73,7 @@
       <div v-if="showReserveDialog" class="dialog-mask">
         <div class="dialog-box">
           <div class="dialog-icon-wrapper">
-            <svg class="dialog-icon" width="48" height="48" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="11" fill="#eaf0ff"/>
-              <path d="M12 7v5l3 3" stroke="#6d8cf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <!-- ...icon... -->
           </div>
           <div class="dialog-title">
             预约机房：<span style="color:#6d8cf0">{{ reserveRoom?.name }}</span>
@@ -85,39 +82,21 @@
             <form @submit.prevent="submitReservation" class="reserve-form">
               <div class="form-row">
                 <label>日期</label>
-                <input type="date" v-model="reserveForm.date" :min="today" required />
+                <input
+                  type="date"
+                  v-model="reserveForm.date"
+                  :min="minDate"
+                  :max="maxDate"
+                  required
+                />
               </div>
               <div class="form-row">
-                <label>开始时间</label>
-                <div class="custom-time-input">
-                  <select v-model="timeParts.startHour" required>
-                    <option v-for="h in 24" :key="`start-h-${h}`" :value="(h-1).toString().padStart(2, '0')">
-                      {{ (h-1).toString().padStart(2, '0') }}
-                    </option>
-                  </select>
-                  <span>:</span>
-                  <select v-model="timeParts.startMinute" required>
-                    <option v-for="m in 6" :key="`start-m-${m}`" :value="((m-1)*10).toString().padStart(2, '0')">
-                      {{ ((m-1)*10).toString().padStart(2, '0') }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-row">
-                <label>结束时间</label>
-                <div class="custom-time-input">
-                  <select v-model="timeParts.endHour" required>
-                    <option v-for="h in 24" :key="`end-h-${h}`" :value="(h-1).toString().padStart(2, '0')">
-                      {{ (h-1).toString().padStart(2, '0') }}
-                    </option>
-                  </select>
-                  <span>:</span>
-                  <select v-model="timeParts.endMinute" required>
-                    <option v-for="m in 6" :key="`end-m-${m}`" :value="((m-1)*10).toString().padStart(2, '0')">
-                      {{ ((m-1)*10).toString().padStart(2, '0') }}
-                    </option>
-                  </select>
-                </div>
+                <label>时间段</label>
+                <select v-model="selectedSlot" required>
+                  <option v-for="slot in timeSlots" :key="slot.label" :value="slot">
+                    {{ slot.label }}
+                  </option>
+                </select>
               </div>
               <div class="dialog-actions">
                 <button type="submit" class="dialog-btn confirm" :disabled="reserveLoading">
@@ -249,22 +228,37 @@ const timeParts = ref({
   endMinute: '00'
 });
 
+// 日期范围：明天到一周后
+const todayObj = new Date();
+const minDateObj = new Date(todayObj);
+minDateObj.setDate(todayObj.getDate() + 1);
+const maxDateObj = new Date(todayObj);
+maxDateObj.setDate(todayObj.getDate() + 7);
+const minDate = minDateObj.toISOString().split('T')[0];
+const maxDate = maxDateObj.toISOString().split('T')[0];
+
+// 固定6个时间段
+const timeSlots = [
+  { label: '08:00-10:00', start: '08:00', end: '10:00' },
+  { label: '10:00-12:00', start: '10:00', end: '12:00' },
+  { label: '14:00-16:00', start: '14:00', end: '16:00' },
+  { label: '16:00-18:00', start: '16:00', end: '18:00' },
+  { label: '18:00-20:00', start: '18:00', end: '20:00' },
+  { label: '20:00-22:00', start: '20:00', end: '22:00' }
+];
+const selectedSlot = ref(timeSlots[0]);
+
 // 监听时间选择的变化，并自动更新表单数据
 watchEffect(() => {
   reserveForm.value.start_time = `${timeParts.value.startHour}:${timeParts.value.startMinute}`;
   reserveForm.value.end_time = `${timeParts.value.endHour}:${timeParts.value.endMinute}`;
 });
 
+// 打开弹窗时初始化
 const openReserveDialog = room => {
   reserveRoom.value = room;
-  // 设置表单默认值
-  reserveForm.value.date = today;
-  timeParts.value = {
-    startHour: '09',
-    startMinute: '00',
-    endHour: '10',
-    endMinute: '00'
-  };
+  reserveForm.value.date = minDate;
+  selectedSlot.value = timeSlots[0];
   reserveError.value = '';
   showReserveDialog.value = true;
 };
@@ -273,30 +267,13 @@ const closeReserveDialog = () => {
   reserveRoom.value = null;
 };
 
+// 提交时用选中的时间段
 const submitReservation = async () => {
   reserveError.value = '';
-  // 校验结束时间不能小于等于开始时间
-  const start = `${timeParts.value.startHour}:${timeParts.value.startMinute}`;
-  const end = `${timeParts.value.endHour}:${timeParts.value.endMinute}`;
-  if (end <= start) {
-    reserveError.value = '结束时间必须晚于开始时间';
+  if (!reserveForm.value.date || !selectedSlot.value) {
+    reserveError.value = '请选择日期和时间段';
     return;
   }
-
-  // 新增：校验开始和结束时间不能早于当前时间
-  const now = new Date();
-  const selectedDate = new Date(reserveForm.value.date);
-  const startDateTime = new Date(`${reserveForm.value.date}T${start}:00`);
-  const endDateTime = new Date(`${reserveForm.value.date}T${end}:00`);
-  // 只校验今天的预约
-  if (
-    selectedDate.toDateString() === now.toDateString() &&
-    (startDateTime < now || endDateTime < now)
-  ) {
-    reserveError.value = '请选择合理的时间哦~';
-    return;
-  }
-
   reserveLoading.value = true;
   try {
     const token = localStorage.getItem('token');
@@ -309,8 +286,8 @@ const submitReservation = async () => {
       body: JSON.stringify({
         room_id: reserveRoom.value.id,
         date: reserveForm.value.date,
-        start_time: reserveForm.value.start_time,
-        end_time: reserveForm.value.end_time
+        start_time: selectedSlot.value.start,
+        end_time: selectedSlot.value.end
       })
     });
     if (!res.ok) {
@@ -319,7 +296,7 @@ const submitReservation = async () => {
     }
     closeReserveDialog();
     showSuccessDialog.value = true;
-    setTimeout(() => { showSuccessDialog.value = false; }, 1800);
+    setTimeout(() => { showSuccessDialog.value = false; }, 1200);
     await fetchRooms();
   } catch (e) {
     reserveError.value = e.message;

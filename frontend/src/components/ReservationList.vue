@@ -189,7 +189,7 @@ const cancelReservation = async () => {
     await fetchReservations();
     closeDialog();
     showSuccessDialog.value = true;
-    setTimeout(() => { showSuccessDialog.value = false; }, 1800);
+    setTimeout(() => { showSuccessDialog.value = false; }, 1200);
   } catch (e) {
     alert(e.message);
   } finally {

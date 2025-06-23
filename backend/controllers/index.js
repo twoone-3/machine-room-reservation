@@ -1,6 +1,7 @@
 import { User, Room, Reservation } from '../models/index.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { Op, fn, col } from 'sequelize'; // 修改：新增 fn 和 col
 
 dotenv.config();
 
@@ -46,8 +47,45 @@ export const createRoom = async (req, res) => {
 // 获取所有机房信息
 export const getAllRooms = async (req, res) => {
     try {
+        // 为了反映机房的实时可用性，我们检查“明天”的预约情况
+        // 注意：这是一个简化的实现，仅根据明天的预约数判断。
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dateString = tomorrow.toISOString().split('T')[0];
+
+        // 查找明天所有状态为 'booked' 的预约，并按 room_id 分组计数
+        const bookedCounts = await Reservation.findAll({
+            where: {
+                date: dateString,
+                status: 'booked'
+            },
+            attributes: ['room_id', [fn('COUNT', col('id')), 'count']],
+            group: ['room_id'],
+            raw: true // 直接返回 JS 对象，提高效率
+        });
+
+        // 将预约计数转换为以 room_id 为键的 Map，方便快速查找
+        const bookingCountsMap = bookedCounts.reduce((acc, item) => {
+            acc[item.room_id] = item.count;
+            return acc;
+        }, {});
+
         const rooms = await Room.findAll();
-        res.json(rooms);
+
+        // 遍历所有机房，并根据预约数量动态附加其可用状态
+        const roomsWithStatus = rooms.map(room => {
+            const roomJson = room.toJSON();
+            const count = bookingCountsMap[roomJson.id] || 0;
+            
+            // 系统中一天有6个预约时间段，如果预约数达到6，则认为该机房明天不可用
+            if (count >= 6) {
+                // 动态修改返回给前端的状态，此操作不影响数据库中的原始数据
+                roomJson.status = 'unavailable'; 
+            }
+            return roomJson;
+        });
+
+        res.json(roomsWithStatus);
     } catch (error) {
         console.error('获取机房信息出错:', error);
         res.status(500).json({ message: '获取机房信息出错', error: error.message });
@@ -92,24 +130,37 @@ export const makeReservation = async (req, res) => {
         if (!room_id || !date || !start_time || !end_time) {
             return res.status(400).json({ message: '参数不完整' });
         }
-        // 检查机房是否可用
+        // 检查机房是否存在
         const room = await Room.findByPk(room_id);
-        if (!room || room.status !== 'available') {
-            return res.status(400).json({ message: '机房不可用' });
+        if (!room) {
+            return res.status(400).json({ message: '机房不存在' });
         }
-        // 检查时间段冲突（可选，简单实现可省略）
+        // 检查该时间段是否已被预约
+        const conflict = await Reservation.findOne({
+            where: {
+                room_id,
+                date,
+                status: 'booked',
+                [Op.or]: [
+                    {
+                        start_time: { [Op.lt]: end_time },
+                        end_time: { [Op.gt]: start_time }
+                    }
+                ]
+            }
+        });
+        if (conflict) {
+            return res.status(400).json({ message: '该时间段已被预约' });
+        }
         // 创建预约
         const reservation = await Reservation.create({
-            user_id: req.user.id, // 直接使用中间件解码后的用户ID
+            user_id: req.user.id,
             room_id,
             date,
             start_time,
             end_time,
             status: 'booked'
         });
-        // 更新机房状态为不可用
-        room.status = 'unavailable';
-        await room.save();
         res.json({ message: '预约成功', reservation });
     } catch (error) {
         console.error('预约失败:', error);
@@ -117,7 +168,7 @@ export const makeReservation = async (req, res) => {
     }
 };
 
-// 取消预约
+// 取消预约时无需更改 Room.status
 export const cancelReservation = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -134,14 +185,6 @@ export const cancelReservation = async (req, res) => {
         }
         reservation.status = 'cancelled';
         await reservation.save();
-
-        // 关键：将对应机房状态设为 available
-        const room = await Room.findByPk(reservation.room_id);
-        if (room) {
-            room.status = 'available';
-            await room.save();
-        }
-
         res.json({ message: '预约已取消' });
     } catch (error) {
         console.error('取消预约失败:', error);
