@@ -139,5 +139,203 @@ onMounted(fetchRooms);
 
 <style scoped>
 @import './teacher.css';
-.room-management-container { background: #fff; padding: 2rem 2.5rem; border-radius: 14px; box-shadow: 0 12px 32px rgba(109,140,240,0.10);}
+
+.room-management-container {
+  background: #fff;
+  padding: 2rem 2.5rem;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(109,140,240,0.10);
+  min-height: 500px;
+}
+
+.header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.8rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.room-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 1px solid #e8eef8;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-header,
+.table-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.5fr 0.8fr 1fr 2.5fr 1fr;
+  align-items: center;
+  padding: 18px 20px;
+  gap: 1rem;
+  font-size: 16px;
+}
+
+.table-header {
+  background: #f8faff;
+  font-weight: 600;
+  color: #4a4a4a;
+  font-size: 15px;
+  border-bottom: 1px solid #e8eef8;
+}
+
+.table-row {
+  color: #555;
+  border-bottom: 1px solid #e8eef8;
+  transition: background-color 0.2s;
+  min-height: 66px;
+}
+.table-row:last-child {
+  border-bottom: none;
+}
+.table-row:hover {
+  background: #f4f7f6;
+}
+.row-item {
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 16px;
+}
+.row-item.description {
+  white-space: normal;
+}
+
+/* 状态标签 */
+.status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-block;
+}
+.status.available {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+.status.unavailable {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+/* 按钮样式 */
+.button {
+  padding: 6px 16px;
+  font-size: 14px;
+  border: none;
+  border-radius: 20px;
+  background: #6d8cf0;
+  color: #fff;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.button:last-child {
+  margin-right: 0;
+}
+.button:hover {
+  background: #5778d0;
+}
+.button.danger {
+  background: #f44336;
+  color: #fff;
+}
+.button.danger:hover {
+  background: #d32f2f;
+}
+
+/* 弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal {
+  background: #fff;
+  padding: 2.2rem 2.5rem 2rem 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(109, 140, 240, 0.18);
+  min-width: 340px;
+  max-width: 96vw;
+}
+.modal h3 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #6d8cf0;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.modal input, .modal select {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 1rem;
+  border: 1px solid #e8eef8;
+  border-radius: 8px;
+  font-size: 15px;
+  background: #f8faff;
+  transition: border 0.2s;
+}
+.modal input:focus, .modal select:focus {
+  border: 1.5px solid #6d8cf0;
+  background: #fff;
+}
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+.modal-buttons .button {
+  flex: 1;
+  margin: 0 4px;
+}
+
+/* 空状态和错误提示 */
+.empty, .error, .loading {
+  text-align: center;
+  color: #888;
+  font-size: 17px;
+  margin: 2.5rem 0;
+}
+.error {
+  color: #d32f2f;
+}
+.loading {
+  color: #6d8cf0;
+}
+
+/* 响应式 */
+@media (max-width: 900px) {
+  .room-management-container { padding: 1.2rem 0.5rem; }
+  .table-header, .table-row {
+    font-size: 14px;
+    padding: 10px 6px;
+    gap: 0.5rem;
+  }
+  .modal { min-width: 220px; padding: 1.2rem 0.8rem; }
+}
+@media (max-width: 600px) {
+  .table-header, .table-row {
+    grid-template-columns: 1fr 1fr 1fr;
+    font-size: 13px;
+  }
+  .modal { min-width: 120px; }
+}
 </style>
