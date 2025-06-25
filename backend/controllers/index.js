@@ -174,3 +174,15 @@ export const cancelReservation = async (req, res) => {
     res.status(500).json({ message: '取消预约失败', error: error.message });
   }
 };
+
+// 获取所有用户
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: ['id', 'username', 'role'] // 去掉 'contact'
+    });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: '获取用户列表失败', error: error.message });
+  }
+};

@@ -98,7 +98,7 @@ const fetchUsers = async () => {
     loading.value = true;
     error.value = null;
     try {
-        const response = await fetch(`${apiBase}/api/user`);
+        const response = await fetch(`${apiBase}/api/users`);
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: '获取用户列表失败' }));
             throw new Error(errorData.message);
