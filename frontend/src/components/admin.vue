@@ -3,7 +3,7 @@
     <navbar :role="'admin'" @nav="currentPage = $event" @logout="logout" />
     <!-- <p>欢迎 {{ userInfo.username }}管理员!</p> -->
     <room-manager v-if="currentPage === 'room'" />
-    <user-manager v-if="currentPage === 'UserManager'" />
+    <user-manager v-if="currentPage === 'user'" />
   </div>
 </template>
 
@@ -13,8 +13,8 @@ import navbar from './NavBar.vue';
 import RoomManager from './RoomManager.vue';
 import UserManager from './UserManager.vue';
 
-// 为了调试用户管理界面，暂时将该界面设置为默认界面
-const currentPage = ref('UserManager');
+// 默认显示用户管理界面
+const currentPage = ref('user');
 
 const userInfo = ref({
   username: localStorage.getItem('username') || ''

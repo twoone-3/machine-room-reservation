@@ -88,107 +88,77 @@ const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 const loading = ref(true);
 const error = ref(null);
 
-const test = ref(true);// 无后端调试用, 联调后端后删除
-
 // 表单数据
 const form = ref({ username: '', contact: '', role: '', password: '' });
 const showAddUser = ref(false);
 const userList = ref([]);
 
-
 // 获取用户列表接口
 const fetchUsers = async () => {
-    if (!test.value) {
-        loading.value = true;
-        error.value = null;
-        try {
-            const response = await fetch(`${apiBase}/api/user`); //根据api情况设置
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: '获取用户列表失败' }));
-                throw new Error(errorData.message);
-            }
-            userList.value = await response.json();
-        } catch (e) {
-            error.value = e.message;
-            console.error(e);
-        } finally {
-            loading.value = false;
+    loading.value = true;
+    error.value = null;
+    try {
+        const response = await fetch(`${apiBase}/api/user`);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: '获取用户列表失败' }));
+            throw new Error(errorData.message);
         }
-    }
-    else {
-        if (userList.value.length === 0) {
-            userList.value = [{
-                id: 1,
-                username: '王教授',
-                contact: '10086',
-                role: 'admin'
-            },
-            {
-                id: 2,
-                username: '小李',
-                contact: '110@qq.com',
-                role: "teacher"
-            },
-            {
-                id: 3,
-                username: '小帅',
-                contact: '120@163.com',
-                role: 'teacher'
-            }
-            ];
-            loading.value = false;
-        }
+        userList.value = await response.json();
+    } catch (e) {
+        error.value = e.message;
+        console.error(e);
+    } finally {
         loading.value = false;
     }
 }
 
 // 修改用户身份为管理员
 const setAsAdmin = async (id) => {
-    if (!test.value) {
-        await fetch(`${apiBase}/api/users/${id}/promote`, { method: 'POST' }); //根据api情况设置
+    try {
+        const response = await fetch(`${apiBase}/api/users/${id}/promote`, { method: 'POST' });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: '设置管理员失败' }));
+            throw new Error(errorData.message);
+        }
         fetchUsers();
-    }
-    else {
-        userList.value.forEach(e => {
-            if (e.id === id) {
-                e.role = 'admin';
-            }
-        });
+    } catch (e) {
+        alert(e.message);
     }
 }
 
 // 删除用户
 const deleteUser = async (id) => {
-    if (!test.value) {
-        await fetch(`${apiBase}/api/users/${id}`, { method: 'DELETE' }); //根据api情况设置
+    if (!confirm('确定要删除该用户吗？')) return;
+    try {
+        const response = await fetch(`${apiBase}/api/users/${id}`, { method: 'DELETE' });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: '删除用户失败' }));
+            throw new Error(errorData.message);
+        }
         fetchUsers();
-    }
-    else {
-        userList.value = userList.value.filter((user) => user.id !== id);
+    } catch (e) {
+        alert(e.message);
     }
 }
 
 // 申请添加用户
 const submitAddUser = async () => {
-    if (!test) {
-        await fetch('/api/users', {
+    try {
+        const response = await fetch(`${apiBase}/api/users`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(form.value)
-        })
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: '添加用户失败' }));
+            throw new Error(errorData.message);
+        }
+        showAddUser.value = false;
+        form.value = { username: '', contact: '', role: '', password: '' };
+        fetchUsers();
+    } catch (e) {
+        alert(e.message);
     }
-    else {
-        let newUser = {};
-        newUser.id = Math.max.apply(Math, userList.value.map(user => { return user.id })) + 1;
-        newUser.username = form.value.username;
-        newUser.contact = form.value.contact;
-        newUser.role = form.value.role;
-        userList.value.push(newUser);
-    }
-    // 初始化添加用户弹窗
-    showAddUser.value = false;
-    form.value = { username: '', contact: '', role: '', password: '' };
-    fetchUsers();
 }
 
 onMounted(fetchUsers)
