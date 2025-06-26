@@ -9,14 +9,14 @@
     <div v-else-if="roomList.length === 0" class="empty">暂无机房信息</div>
     <div v-else class="room-table">
       <div class="table-header">
-        <div>名称</div>
-        <div>位置</div>
-        <div>容量</div>
-        <div>状态</div>
+        <div @click="sortBy('name')" :class="{ sortable: true, active: sortKey === 'name' }">名称</div>
+        <div @click="sortBy('location')" :class="{ sortable: true, active: sortKey === 'location' }">位置</div>
+        <div @click="sortBy('capacity')" :class="{ sortable: true, active: sortKey === 'capacity' }">容量</div>
+        <div @click="sortBy('status')" :class="{ sortable: true, active: sortKey === 'status' }">状态</div>
         <div>描述</div>
         <div>操作</div>
       </div>
-      <div class="table-row" v-for="room in roomList" :key="room.id">
+      <div class="table-row" v-for="room in pagedRooms" :key="room.id">
         <div class="row-item">{{ room.name }}</div>
         <div class="row-item">{{ room.location }}</div>
         <div class="row-item">{{ room.capacity }}</div>
@@ -53,11 +53,22 @@
         </form>
       </div>
     </div>
+
+    <!-- 分页组件 -->
+    <Pagination
+      v-if="sortedRooms.length > pageSize"
+      :total="sortedRooms.length"
+      :page-size="pageSize"
+      v-model="page"
+      style="margin-top: 24px;"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import Pagination from './Pagination.vue';
+
 const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 const loading = ref(true);
 const error = ref(null);
@@ -74,6 +85,13 @@ const form = ref({
   description: ''
 });
 
+const page = ref(1);
+const pageSize = 10;
+const totalRooms = ref(0);
+
+const sortKey = ref('status');
+const sortOrder = ref('asc');
+
 // 获取机房列表
 const fetchRooms = async () => {
   loading.value = true;
@@ -81,7 +99,9 @@ const fetchRooms = async () => {
   try {
     const res = await fetch(`${apiBase}/api/rooms`);
     if (!res.ok) throw new Error('获取机房列表失败');
-    roomList.value = await res.json();
+    const data = await res.json();
+    roomList.value = data; // 直接赋值为数组
+    totalRooms.value = data.length;
   } catch (e) {
     error.value = e.message;
   } finally {
@@ -134,6 +154,35 @@ const closeModal = () => {
   form.value = { id: null, name: '', location: '', capacity: 1, status: 'available', description: '' };
 };
 
+const sortBy = key => {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey.value = key;
+    sortOrder.value = 'asc';
+  }
+};
+
+const sortedRooms = computed(() => {
+  return [...roomList.value].sort((a, b) => {
+    let valA = a[sortKey.value] ?? '';
+    let valB = b[sortKey.value] ?? '';
+    if (sortKey.value === 'status') {
+      const statusOrder = { available: 0, unavailable: 1 };
+      return (sortOrder.value === 'asc' ? 1 : -1) * (statusOrder[valA] - statusOrder[valB]);
+    }
+    if (typeof valA === 'number' && typeof valB === 'number') {
+      return (sortOrder.value === 'asc' ? 1 : -1) * (valA - valB);
+    }
+    return (sortOrder.value === 'asc' ? 1 : -1) * String(valA).localeCompare(String(valB), 'zh-CN');
+  });
+});
+
+const pagedRooms = computed(() => {
+  const start = (page.value - 1) * pageSize;
+  return sortedRooms.value.slice(start, start + pageSize);
+});
+
 onMounted(fetchRooms);
 </script>
 
@@ -144,7 +193,7 @@ onMounted(fetchRooms);
   background: #fff;
   padding: 2rem 2.5rem;
   border-radius: 14px;
-  box-shadow: 0 12px 32px rgba(109,140,240,0.10);
+  box-shadow: 0 12px 32px rgba(109, 140, 240, 0.10);
   min-height: 500px;
 }
 
@@ -198,12 +247,15 @@ onMounted(fetchRooms);
   transition: background-color 0.2s;
   min-height: 66px;
 }
+
 .table-row:last-child {
   border-bottom: none;
 }
+
 .table-row:hover {
   background: #f4f7f6;
 }
+
 .row-item {
   text-align: left;
   white-space: nowrap;
@@ -211,6 +263,7 @@ onMounted(fetchRooms);
   text-overflow: ellipsis;
   font-size: 16px;
 }
+
 .row-item.description {
   white-space: normal;
 }
@@ -223,10 +276,12 @@ onMounted(fetchRooms);
   font-weight: 500;
   display: inline-block;
 }
+
 .status.available {
   background: #e8f5e9;
   color: #388e3c;
 }
+
 .status.unavailable {
   background: #ffebee;
   color: #d32f2f;
@@ -244,16 +299,20 @@ onMounted(fetchRooms);
   margin-right: 8px;
   transition: background 0.2s, color 0.2s;
 }
+
 .button:last-child {
   margin-right: 0;
 }
+
 .button:hover {
   background: #5778d0;
 }
+
 .button.danger {
   background: #f44336;
   color: #fff;
 }
+
 .button.danger:hover {
   background: #d32f2f;
 }
@@ -261,13 +320,17 @@ onMounted(fetchRooms);
 /* 弹窗样式 */
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.18);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 }
+
 .modal {
   background: #fff;
   padding: 2.2rem 2.5rem 2rem 2.5rem;
@@ -276,6 +339,7 @@ onMounted(fetchRooms);
   min-width: 340px;
   max-width: 96vw;
 }
+
 .modal h3 {
   font-size: 22px;
   font-weight: 700;
@@ -283,7 +347,9 @@ onMounted(fetchRooms);
   margin-bottom: 1.5rem;
   text-align: center;
 }
-.modal input, .modal select {
+
+.modal input,
+.modal select {
   width: 100%;
   padding: 10px 14px;
   margin-bottom: 1rem;
@@ -293,49 +359,71 @@ onMounted(fetchRooms);
   background: #f8faff;
   transition: border 0.2s;
 }
-.modal input:focus, .modal select:focus {
+
+.modal input:focus,
+.modal select:focus {
   border: 1.5px solid #6d8cf0;
   background: #fff;
 }
+
 .modal-buttons {
   display: flex;
   justify-content: space-between;
   margin-top: 1rem;
 }
+
 .modal-buttons .button {
   flex: 1;
   margin: 0 4px;
 }
 
 /* 空状态和错误提示 */
-.empty, .error, .loading {
+.empty,
+.error,
+.loading {
   text-align: center;
   color: #888;
   font-size: 17px;
   margin: 2.5rem 0;
 }
+
 .error {
   color: #d32f2f;
 }
+
 .loading {
   color: #6d8cf0;
 }
 
 /* 响应式 */
 @media (max-width: 900px) {
-  .room-management-container { padding: 1.2rem 0.5rem; }
-  .table-header, .table-row {
+  .room-management-container {
+    padding: 1.2rem 0.5rem;
+  }
+
+  .table-header,
+  .table-row {
     font-size: 14px;
     padding: 10px 6px;
     gap: 0.5rem;
   }
-  .modal { min-width: 220px; padding: 1.2rem 0.8rem; }
+
+  .modal {
+    min-width: 220px;
+    padding: 1.2rem 0.8rem;
+  }
 }
+
 @media (max-width: 600px) {
-  .table-header, .table-row {
+
+  .table-header,
+  .table-row {
     grid-template-columns: 1fr 1fr 1fr;
     font-size: 13px;
   }
-  .modal { min-width: 120px; }
+
+  .modal {
+    min-width: 120px;
+  }
 }
 </style>

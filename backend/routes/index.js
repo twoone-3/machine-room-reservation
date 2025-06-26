@@ -1,16 +1,17 @@
 import express from 'express';
-import { createUser, loginUser, createRoom, makeReservation, getAllRooms, getMyReservations, cancelReservation, getReservationsByRoomAndDate, getAllUsers } from '../controllers/index.js';
+import { loginUser, createRoom, makeReservation, getAllRooms, getMyReservations, cancelReservation, getReservationsByRoomAndDate, getAllUsers, updateRoom, deleteRoom } from '../controllers/index.js';
 import { verifyToken } from '../middlewares/index.js';
 
 const router = express.Router();
 
-// 用户注册与登录
-router.post('/users/register', createUser);
-router.post('/login', loginUser); // 修改为 /api/login
+// 用户登录
+router.post('/login', loginUser);
 
 // 机房管理
 router.post('/rooms', createRoom);
 router.get('/rooms', getAllRooms);
+router.put('/rooms/:id', updateRoom);
+router.delete('/rooms/:id', deleteRoom);
 
 // 预约管理
 router.post('/reservations', verifyToken, makeReservation);

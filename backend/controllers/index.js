@@ -10,11 +10,6 @@ if (!JWT_SECRET) {
   throw new Error('JWT_SECRET 未设置，请检查 .env 文件');
 }
 
-// 用户注册（可选实现）
-export const createUser = async (req, res) => {
-  // TODO: 实现用户注册
-};
-
 // 用户登录
 export const loginUser = async (req, res) => {
   const { username, password } = req.body;
@@ -41,7 +36,22 @@ export const loginUser = async (req, res) => {
 
 // 创建机房
 export const createRoom = async (req, res) => {
-  // TODO: 实现机房创建
+  try {
+    const { name, location, capacity } = req.body;
+    if (!name || !location || !capacity) {
+      return res.status(400).json({ message: '参数不完整' });
+    }
+    // 检查机房名称是否已存在
+    const exists = await Room.findOne({ where: { name } });
+    if (exists) {
+      return res.status(400).json({ message: '机房名称已存在' });
+    }
+    const room = await Room.create({ name, location, capacity });
+    res.status(201).json({ message: '机房创建成功', room });
+  } catch (error) {
+    console.error('创建机房失败:', error);
+    res.status(500).json({ message: '创建机房失败', error: error.message });
+  }
 };
 
 // 获取所有机房信息
@@ -184,5 +194,32 @@ export const getAllUsers = async (req, res) => {
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: '获取用户列表失败', error: error.message });
+  }
+};
+
+// 编辑机房
+export const updateRoom = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, location, capacity, status, description } = req.body;
+    const room = await Room.findByPk(id);
+    if (!room) return res.status(404).json({ message: '机房不存在' });
+    await room.update({ name, location, capacity, status, description });
+    res.json({ message: '机房更新成功', room });
+  } catch (error) {
+    res.status(500).json({ message: '机房更新失败', error: error.message });
+  }
+};
+
+// 删除机房
+export const deleteRoom = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const room = await Room.findByPk(id);
+    if (!room) return res.status(404).json({ message: '机房不存在' });
+    await room.destroy();
+    res.json({ message: '机房已删除' });
+  } catch (error) {
+    res.status(500).json({ message: '删除机房失败', error: error.message });
   }
 };
