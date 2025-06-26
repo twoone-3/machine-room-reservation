@@ -4,7 +4,10 @@
     <ul class="navbar-menu">
       <!-- 菜单根据角色动态生成 -->
       <li v-for="item in menu" :key="item.label">
-        <a href="#" @click.prevent="$emit('nav', item.key)">{{ item.label }}</a>
+        <a href="#" 
+           @click.prevent="$emit('nav', item.key)"
+           :class="{ active: item.key === current }"
+        >{{ item.label }}</a>
       </li>
     </ul>
     <div class="navbar-user">
@@ -16,16 +19,10 @@
 
 <script setup>
 import { computed } from 'vue';
-
-// 角色由父组件传入
 const props = defineProps({
-  role: {
-    type: String,
-    required: true
-  }
+  role: { type: String, required: true },
+  current: { type: String, default: '' }
 });
-
-// 根据角色生成菜单
 const menu = computed(() => {
   return props.role === 'admin'
     ? [
