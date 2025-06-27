@@ -25,11 +25,8 @@
     newUser: {
         "username": String,
         "contact": String,
-        "role": String, // 未设置限制，也就是用户可以输任何值，需要在前端或后端添加逻辑判断合法性
         "password": String // 管理员可以设置用户的初始密码。也可以修改逻辑，为每一个新增用户设置统一的初始密码
     }
-
-    注意: 其中if(test.value)均为无后端进行的测试，接上后端后可删除。其中ajax逻辑可以修改为更优的。
  -->
 <template>
   <div class="user-management-container">
